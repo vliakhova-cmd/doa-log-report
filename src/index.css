@@ -1,0 +1,16 @@
+/* Minimal reset — this project has no Tailwind/preflight, but every inline
+   style in it was written assuming border-box sizing and a zeroed body
+   margin. Without this, form elements (textarea/input/select) fall back to
+   content-box with browser-default padding, so a `width: 100%` element
+   quietly renders a few px wider than its container — invisible until
+   something (e.g. autoFocus) triggers a native scroll-into-view and exposes
+   the accumulated horizontal overflow. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}

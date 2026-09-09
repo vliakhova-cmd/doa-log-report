@@ -1,0 +1,1463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cross-Module Check — Delegation Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --brand:#1f6aac; --brand-2:#5391c6; --brand-3:#d0e5f6; --brand-4:#e5f1fb;
+    --text:#0b1528; --text-2:#576581; --text-3:#949daf;
+    --line:#dce1eb; --line-soft:#f2f4fa;
+    --page:#f8faff; --panel:#f2f4fa; --white:#fff;
+    --ok:#25861e; --ok-bg:#c0dcbf;
+    --warn:#af620b; --warn-line:#d1862e; --warn-bg:#f2cea4;
+    --red-subtle:#f8dbd8; /* status/solid/red-subtle */
+    --yellow-bg:#f7e8ba;  /* status/solid/yellow */
+    --cb-border:#c2cad8;  /* control/checkbox/resting-border */
+    /* status/flat/red #d23c2d measures 4.14:1 on the row-hover fill — under AA
+       for this 12px caption — so the overdue line darkens along the same hue. */
+    --overdue:#b32d22;
+    --amb-sat:#7349aa;   /* status/flat/purple · bg/accent/purple/solid/saturated/resting */
+    --r:5px;
+    /* card/* — Card/Overview, DS - Advanced node 14601:151877 */
+    --card-bg:#ffffff; --card-hover-bg:#e5f1fb; --card-selected-bg:#d0e5f6;
+    --card-secondary-bg:#f2f4fa; --card-label:#576581; --card-main:#0b1528;
+    --card-default-icon:#949daf;
+    /* bg/accent/<hue>/solid/{saturated,subtlest}/* */
+    --ac-green-sat:#25861e; --ac-green:#e9f3e9; --ac-green-h:#d3e7d2; --ac-green-s:#c0dcbf;
+    --ac-orange-sat:#d1862e; --ac-orange:#f9f0e7; --ac-orange-h:#f5e1ce; --ac-orange-s:#f2cea4;
+    --ac-purple-sat:#7349aa; --ac-purple:#f4eefa; --ac-purple-h:#e9def4; --ac-purple-s:#dcc8f5;
+    --card-sh-1:#0b15281a; --card-sh-2:#0b152808;
+    /* dialog/* — Dialog, DS - Advanced node 35:11233 */
+    --dlg-bg:#f8faff; --dlg-content-bg:#ffffff;
+    --dlg-overlay:#0b152899; --dlg-title:#0b1528;
+    /* table/* — Table, DS - Advanced node 86:208584 */
+    --tbl-bg:#ffffff; --tbl-border:#f2f4fa; --tbl-header-text:#576581;
+    --tbl-main:#0b1528; --tbl-additional:#576581;
+    --tbl-hover:#e5f1fb; --tbl-selected:#d0e5f6; --chip-border:#dce1eb;
+    /* progress-bar/* — Graphics/Progress Bar/Small, DS - Base */
+    --pb-track:#dce1eb;   /* progress-bar/main-bg */
+    --pb-1199:#4bace8;    /* progress-bar/11-99-percent-track-bg */
+    --pb-100:#25861e;     /* progress-bar/100-percent-track-bg — see README */
+    --pb-10:#d23c2d;      /* progress-bar/10-percent-track-bg — see README */
+    --pb-label:#0b1528;   /* progress-bar/small/label-text */
+    --pb-add:#576581;     /* progress-bar/small/additioanl-text — see README */
+    /* dashlet/* — Dashlet, DS - Advanced node 34:26815 */
+    --dash-bg:#ffffff; --dash-hd-bg:#ffffff; --dash-hd-border:#f2f4fa;
+    --dash-hd-title:#1f6aac; --dash-hd-icon:#1f6aac; --dash-hd-hover:#e5f1fb;
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  /* Form controls don't inherit the family, so any button that doesn't set one
+     falls back to the UA default (Arial). Everything in the DS is Open Sans. */
+  button,input,select,textarea{font-family:inherit}
+  body{margin:0;background:var(--page);color:var(--text);
+       font:400 14px/20px 'Open Sans',system-ui,-apple-system,sans-serif}
+  .wrap{padding:15px 15px 30px;max-width:1440px;margin:0 auto}   /* sizes/gap/m · portlet y-bottom */
+  :is(button,a,[tabindex]):focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:var(--r)}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  /* Headings/H1 — 28/40 400. Only the visually-hidden page title uses it, but the
+     UA default (28/normal/bold) is off-scale, so it is set rather than inherited. */
+  h1{margin:0;font-size:28px;line-height:40px;font-weight:400}
+
+  .grow{flex:1 0 0}
+
+  /* Button/Solid — DS Base 8244:45118. Medium is the only size the component
+     specifies paddings for: button/solid/medium-paddings 15/5, radius 5,
+     border-width 1, solid-outline-medium-minwidth 75, gap 5, and
+     Buttons/Medium (Default) 14/20/600. */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;
+       min-width:75px;padding:5px 15px;border-radius:5px;border:1px solid;
+       font-family:inherit;font-size:14px;line-height:20px;font-weight:600;
+       cursor:pointer;white-space:nowrap;
+       /* tertiary — white on a #dce1eb rule */
+       background:var(--white);border-color:var(--line);color:var(--brand)}
+  .btn:hover{background:#d0e5f6;border-color:#d0e5f6}
+  .btn:active{background:#5391c6;border-color:#5391c6;color:#fff}
+  .btn[disabled]{opacity:.4;cursor:not-allowed}          /* button/disabled-opacity 40 */
+  /* Focus-outer — 1px white then 3px brand, not the generic page outline */
+  .btn:focus-visible{outline:none;box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+
+  .btn-primary{background:var(--brand);border-color:var(--brand);color:#fff}
+  .btn-primary:hover{background:#164b7a;border-color:#164b7a}
+  .btn-primary:active{background:#113a5f;border-color:#113a5f}
+
+  /* button/solid/secondary — white on a brand rule, so a row's call to action
+     reads as available without competing with the document's own primaries. */
+  .btn-secondary{background:#fff;border-color:var(--brand);color:var(--brand)}
+  .btn-secondary:hover{background:#d0e5f6;border-color:var(--brand)}
+  .btn-secondary:active{background:#5391c6;border-color:#5391c6;color:#fff}
+
+  /* button/solid/success — the same component reporting that its action landed,
+     so a completed call to action still reads as a button and never as a status.
+     It is aria-disabled rather than disabled: button/disabled-opacity 40 would
+     take white-on-#25861e from 4.66:1 to about 1.7:1. Done is not unavailable. */
+  .btn-success{background:#25861e;border-color:#25861e;color:#fff}
+  .btn-success[aria-disabled="true"]{opacity:1;cursor:default}
+
+  /* ── Card/Overview — DS - Advanced | IN PROGRESS | 2.0, node 14601:151877 ──
+     Label on top (Caption/Regular), then the value row: a 20px semantic glyph
+     beside the count (Headings/H3/Bold). Selected is a light card/selected-bg
+     fill that keeps its dark text — not an inversion. */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+         gap:10px;margin-bottom:15px}          /* card/overview/between-card-gap · sizes/gap/m */
+  .tile{--c-bg:var(--card-bg); --c-hover:var(--card-hover-bg); --c-sel:var(--card-selected-bg);
+        --c-bar:transparent;
+        position:relative;display:block;width:100%;text-align:left;font:inherit;cursor:pointer;
+        background:var(--c-bg);
+        /* Highlighted=On — a left rule in the accent's saturated colour.
+           border-l-[card/border-width] in bg/accent/<hue>/solid/saturated/resting. */
+        border:0 solid var(--c-bar);border-left-width:2px;   /* card/border-width */
+        border-radius:var(--r);
+        padding:10px;overflow:hidden;                        /* sizes/gap/s */
+        box-shadow:0 0 0 1px var(--card-sh-2), 0 2px 15px var(--card-sh-1);  /* Card/Resting */
+        transition:background-color .12s,box-shadow .12s}
+  /* Accent variants — bg/accent/<hue>/solid/{subtlest/*, saturated/resting} */
+  .tile[data-accent="green"] {--c-bg:var(--ac-green); --c-hover:var(--ac-green-h); --c-sel:var(--ac-green-s); --c-bar:var(--ac-green-sat)}
+  .tile[data-accent="orange"]{--c-bg:var(--ac-orange);--c-hover:var(--ac-orange-h);--c-sel:var(--ac-orange-s);--c-bar:var(--ac-orange-sat)}
+  .tile[data-accent="purple"]{--c-bg:var(--ac-purple);--c-hover:var(--ac-purple-h);--c-sel:var(--ac-purple-s);--c-bar:var(--ac-purple-sat)}
+
+  /* card/hover-shadow — the card lifts on hover */
+  .tile:hover:not([disabled]){background:var(--c-hover);
+        box-shadow:0 0 0 1px var(--card-sh-2), 0 17px 45px var(--card-sh-1)}
+
+  /* Selected is a FILL, not a ring — the 2px brand ring is the component's
+     separate focus variant and is deliberately not used here. Card/Selected
+     adds a same-colour 2px halo, which reads as weight rather than an outline. */
+  .tile[aria-pressed="true"]{background:var(--c-sel);
+                             box-shadow:0 0 0 2px var(--c-sel)}
+  /* The label drops to card/overview/main-text on a selected fill: #576581 on
+     these accent selected values measures 3.8–4.0:1, under AA. */
+  .tile[aria-pressed="true"] .l{color:var(--card-main)}
+
+  /* An emptied tile leaves rather than lingering greyed out — .tile sets
+     display:block, so [hidden] has to be restated to win. */
+  .tile[hidden]{display:none}
+
+  .tile .l{display:block;color:var(--card-label);font-size:12px;line-height:15px;font-weight:400}
+  .tile .v{display:flex;align-items:center;gap:5px;margin-top:5px}  /* card/gap-x-1 · gap-y-1 */
+  .tile .v svg{width:20px;height:20px;flex:0 0 20px}                /* card/overview/icon-size */
+  /* Headings/H6/Semibold — the DS count is 14/20, not a display number */
+  .tile .n{font-size:14px;line-height:20px;font-weight:600;color:var(--card-main)}
+
+  /* ── filters ────────────────────────────────────────────── */
+  .filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .empty{padding:26px 14px;text-align:center;color:var(--text-2);
+         font-size:14px;line-height:20px}  /* Body/Regular */
+
+  /* ── Table — DS - Advanced | IN PROGRESS | 2.0, node 86:208584 ─────────── */
+  .scroll{overflow-x:auto}
+  table{width:100%;border-collapse:collapse}
+
+  /* table/header/* — height 40, padding 15/5, Table/Header 12/15 600 */
+  thead th{position:sticky;top:0;z-index:1;background:var(--tbl-bg);text-align:left;
+           height:40px;padding:0 5px 0 15px;
+           font-size:12px;line-height:15px;font-weight:600;color:var(--tbl-header-text);
+           border-bottom:1px solid var(--tbl-border);white-space:nowrap}
+
+  /* table/cell/* — medium: min-height 45, padding 15/5, padding-y 5 */
+  tbody td{min-height:45px;height:45px;padding:5px 5px 5px 15px;
+           border-bottom:1px solid var(--tbl-border);vertical-align:middle;
+           font-size:14px;line-height:20px;color:var(--tbl-main)}  /* Table/Cell/Regular */
+  tbody tr.r:hover{background:var(--tbl-hover)}                     /* table/cell/hover-bg */
+  tbody tr.r.open{background:var(--tbl-hover)}
+  /* Row accent, 2px to match card/border-width and the card's left rule */
+  tbody tr.attn td:first-child{box-shadow:inset 2px 0 0 var(--ac-orange-sat)}
+  tbody tr.ambr td:first-child{box-shadow:inset 2px 0 0 var(--ac-purple-sat)}
+  .who{font-weight:600;white-space:nowrap}
+  .sub{color:var(--tbl-additional);font-size:12px;line-height:15px}  /* Caption/Regular · table/cell/value/additional-text */
+  .cellwrap{min-width:100px;max-width:400px}                         /* table/column-{min,max}-width */
+  /* Chip columns keep the DS default left alignment and centre only vertically.
+     Prefixed .dash to outrank `.dash tbody td`, which sets vertical-align:top and
+     would otherwise win on source order. */
+  .dash thead th.ctr, .dash tbody td.ctr{text-align:left;padding-right:15px}
+  .disc{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+        border:none;background:transparent;color:var(--brand);cursor:pointer;border-radius:var(--r)}
+  .disc:hover{background:var(--brand-3)}
+  .disc svg{transition:transform .12s}
+  tr.open .disc svg{transform:rotate(90deg)}
+  @media (prefers-reduced-motion:reduce){.disc svg{transition:none}}
+
+  /* ── status ─────────────────────────────────────────────── */
+  /* Status/Solid — DS Base 15380:114618. status/gap 5, status/solid/padding-x 5,
+     status/radius-s 5, status/medium-label-max-width 200, status/solid/text on
+     every fill, and Statuses/Semibold/Medium 12/20/600 rendered UPPERCASE, which
+     is the component's own casing rather than something the copy has to carry.
+     No icon: the label is the whole component. */
+  .st{display:inline-flex;align-items:center;gap:5px;padding:0 5px;
+      max-width:200px;border-radius:var(--r);white-space:nowrap;
+      overflow:hidden;text-overflow:ellipsis;text-transform:uppercase;
+      color:var(--tbl-main);                                              /* status/solid/text */
+      font-family:inherit;font-size:12px;line-height:20px;font-weight:600}  /* Statuses/Semibold/Medium */
+  .st-ok{background:var(--ok-bg)}       /* status/solid/green  #c0dcbf */
+  .st-warn{background:var(--warn-bg)}   /* status/solid/orange #f2cea4 */
+  .st-amb{background:var(--ac-purple-s)}/* status/solid/purple #dcc8f5 */
+  .st-yellow{background:var(--yellow-bg)}/* status/solid/yellow #f7e8ba */
+  /* An outstanding training that has passed its due date. Caption/Regular, and
+     the word "Overdue" carries the meaning so the colour never has to. */
+  .overdue{color:var(--overdue);font-size:12px;line-height:15px;font-weight:600}
+
+  /* ── expanded detail ────────────────────────────────────── */
+  .c-disc{width:35px;padding-left:10px;padding-right:0}   /* table/column-favorite-width */
+  /* Expanded row — table/row/expand-*, DS - Advanced node 86:211185.
+     The group is marked by ONE 2px rule down the left (table/row/expand-element
+     #1f6aac) running from the top of the open parent row to the bottom of its
+     expansion, plus the indent. The child rows carry no separators of their own —
+     that is what makes them read as one group rather than more table rows. */
+  /* `> td` throughout: a descendant selector would also match every cell of the
+     nested table inside, giving each one its own copy of the rule. */
+  .detail > td{position:relative;background:var(--tbl-bg);padding:0;height:auto;
+             border-bottom:1px solid var(--tbl-border)}
+  tbody tr.r.open > td:first-child{position:relative}
+  /* table/row/expand-element-width 2 · expand-element-radius-left 5 (the radius
+     clamps to ~1px at this width; it rounds the outer end of each half so the two
+     halves still meet flush in the middle). */
+  tbody tr.r.open > td:first-child::before,
+  .detail > td::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;
+                     background:var(--brand)}
+  tbody tr.r.open > td:first-child::before{border-radius:5px 0 0 0}
+  .detail > td::before{border-radius:0 0 0 5px}
+  /* table/row/expand-padding — 15 y, 45 left, 15 right */
+  .dbox{padding:15px 15px 15px 45px}
+
+  /* Nested table — no cell rules of its own. It sits inside .dash, so the very
+     rules the grid around it uses (.dash thead th, .dash tbody td, .dash .no,
+     .dash .course) apply to it unchanged: same heights, same padding, same
+     separators. Only the hover and the status column need adding, because the
+     parent grid keys hover off `tr.r`, which these rows are not. */
+  .dbox table.sub tbody tr:hover{background:var(--tbl-hover)}   /* table/cell/hover-bg */
+  .dbox table.sub .stcol{width:1%;white-space:nowrap;padding-right:0}
+  /* Only separate the table from what follows when something does follow it. */
+  .dbox table.sub:not(:last-child){margin-bottom:15px}
+
+
+  /* Contact picker — one card per candidate, chosen with a radio. The card is
+     the label, so the whole thing is the hit target. */
+  .cands{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:15px}
+  .cand{position:relative;display:block;cursor:pointer;
+        border:1px solid var(--line);border-radius:var(--r);padding:15px;background:var(--white)}
+  .cand:hover{border-color:var(--brand);background:var(--brand-4)}
+  .cand:has(input:checked){border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
+  .cand input{position:absolute;opacity:0;pointer-events:none}
+  .cand:has(input:focus-visible){box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+  .cand-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  /* Graphics/Avatar — avatar/extrasmall 30x30, circle-radius 100, 1px
+     avatar/default-border, initials in avatar/initial-text. */
+  .av{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;
+      width:30px;height:30px;border-radius:100px;border:1px solid var(--line-soft);
+      color:var(--white);font-size:16px;line-height:20px;font-weight:600}  /* Headings/H5/Semibold */
+  .cand-nm{font-size:14px;line-height:20px;font-weight:600;color:var(--tbl-main)}
+  .cand-rl{font-size:12px;line-height:15px;color:var(--text-2)}
+  .cand dl{display:grid;grid-template-columns:auto 1fr;gap:5px 10px;margin:0;
+           font-size:12px;line-height:15px}                            /* Caption/Regular */
+  .cand dt{color:var(--text-2)}
+  .cand dd{margin:0;color:var(--tbl-main);word-break:break-word}
+  .cand .key{font-weight:600}
+
+  /* ── Alert — DS Base 11252:127216 ──────────────────────────────────────
+     A white panel on a 2px semantic left rule: the glyph and the rule share the
+     type's colour, and the title carries the meaning so neither is load-bearing
+     on its own. Floated top-right over the report, one at a time. */
+  .alerts{position:fixed;top:15px;right:15px;z-index:60;display:flex;flex-direction:column;
+          gap:10px;pointer-events:none}
+  .alert{display:flex;align-items:center;gap:5px;                  /* alert/gap-x-xs */
+         min-width:400px;max-width:600px;                          /* alert/{min,max}-width */
+         padding:15px 15px 15px 30px;                              /* alert/paddings-y · -left-x · -right-x */
+         border-left:2px solid;                                    /* alert/border-left */
+         border-radius:5px;                                        /* alert/radius */
+         background:var(--white);                                  /* alert/bg */
+         box-shadow:0 12px 35px var(--card-sh-1), 0 0 0 1px var(--card-sh-2);  /* Alert */
+         pointer-events:auto}
+  .alert svg.ic{flex:0 0 20px}                                     /* alert/icon-size-s */
+  .alert .t{flex:1 1 auto;color:var(--tbl-main);
+            font-size:14px;line-height:20px;font-weight:700}       /* Headings/H6/Bold · alert/title-text */
+  .alert-x{display:inline-flex;align-items:center;justify-content:center;
+           width:20px;height:20px;padding:1px 2px;                 /* button/flat/padding */
+           border:1px solid transparent;border-radius:5px;         /* button/flat/radius */
+           background:transparent;color:var(--brand);cursor:pointer;flex-shrink:0}
+  .alert-x:hover{background:var(--brand-3)}
+  .a-success{border-left-color:#25861e}                            /* alert/success-border */
+  .a-success svg.ic{color:#25861e}                                 /* alert/success-icon */
+  @media (prefers-reduced-motion:no-preference){
+    .alert{animation:doa-alert-in .18s ease-out}
+    @keyframes doa-alert-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  }
+
+  /* ── Dialog — dialog/*, node 35:11233 ─────────────────────── */
+  dialog{padding:0;border:none;color:inherit;font:inherit;
+         width:min(800px,90vw);          /* sizes/dialog/width-m · large-viewport-width */
+         max-height:90vh;min-height:200px;
+         background:var(--dlg-bg);border-radius:10px;              /* dialog/radius */
+         box-shadow:0 17px 45px var(--card-sh-1), 0 0 0 1px var(--card-sh-2)}  /* Dialog */
+  dialog::backdrop{background:var(--dlg-overlay)}                  /* dialog/overlay/bg */
+  dialog[open]{display:flex;flex-direction:column}
+
+  .dlg-bar{display:flex;align-items:center;gap:15px;flex-shrink:0;
+           padding:15px 30px}                                      /* dialog/titlebar/paddings */
+  .dlg-bar h2{margin:0;flex:1 0 0;font-size:20px;line-height:30px;font-weight:600;
+              color:var(--dlg-title)}                              /* Headings/H3/Semibold */
+  .dlg-x{display:inline-flex;align-items:center;justify-content:center;
+         width:24px;height:22px;padding:1px 2px;border:1px solid transparent;border-radius:5px;
+         background:transparent;color:var(--brand);cursor:pointer;flex-shrink:0}
+  .dlg-x:hover{background:var(--brand-3)}
+
+  /* dialog/content — a white panel inset inside the dialog surface */
+  .dlg-content{flex:1 1 auto;min-height:0;overflow-y:auto;
+               margin:0 15px;padding:15px;border-radius:5px;background:var(--dlg-content-bg)}
+  /* A dialog with actions closes on its own footer bar, outside the white
+     content panel, actions centred: Cancel then the primary. Its paddings
+     mirror dialog/titlebar/paddings 15/30 — the footer's own values could not be
+     read, the node is in a file the Figma server cannot currently reach. */
+  .dlg-foot{display:flex;align-items:center;justify-content:center;gap:10px;
+            flex-shrink:0;padding:15px 30px}
+  /* Without actions there is no bar, and the content panel keeps its own margin. */
+  .dlg-content:last-child{margin-bottom:15px}
+
+  /* Enrol picker — control/checkbox/* (15x15, radius 2, 1px #c2cad8 on #fff)
+     inside a Table/Cell-sized row, so choosing courses reads like the tables it
+     was opened from rather than like a form. */
+  .enrol{list-style:none;margin:0;padding:0}
+  .enrol li{border-bottom:1px solid var(--tbl-border)}
+  .enrol li:last-child{border-bottom:none}
+  .enrol label{display:flex;align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer}
+  .enrol input{appearance:none;flex:0 0 15px;width:15px;height:15px;margin:2px 0 0;
+               border:1px solid var(--cb-border);border-radius:2px;background:var(--white);
+               cursor:pointer;position:relative}
+  /* The rule goes brand on hover before anything is selected — the affordance
+     the resting grey alone does not give. */
+  .enrol input:hover{border-color:var(--brand)}                    /* hover-border */
+  .enrol input:checked{background:var(--brand);border-color:var(--brand)}
+  .enrol input:checked:hover{background:#164b7a;border-color:#164b7a}  /* selected-hover */
+  .enrol input:checked::after{content:'';position:absolute;left:4px;top:1px;
+                              width:4px;height:8px;
+                              border:solid var(--white);border-width:0 2px 2px 0;
+                              transform:rotate(45deg)}              /* control/checkbox/icon */
+  .enrol input:focus-visible{outline:none;box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+  .enrol .cn{font-size:14px;line-height:20px;color:var(--tbl-main)}      /* Body/Regular */
+  .enrol .dt{font-size:12px;line-height:15px;color:var(--text-2)}        /* Caption/Regular */
+  .dlg-note{margin:15px 0 0;font-size:12px;line-height:15px;color:var(--text-2)}  /* Caption/Regular */
+  .dlg-lead{margin:0 0 10px;font-size:14px;line-height:20px;color:var(--tbl-main)}
+
+  /* ── Dashlet — DS - Advanced | IN PROGRESS | 2.0, node 34:26815 ────────── */
+  /* Two separate full-width panels, stacked, sizes/gap/m apart. */
+  .dash + .dash, .dash-row{margin-top:15px}
+  .dash{max-width:1470px}                                    /* dashlet/max-width */
+  .dash{min-width:300px;background:var(--dash-bg);border-radius:10px;   /* dashlet/{bg,radius} */
+        box-shadow:0 2px 15px var(--card-sh-1), 0 0 0 1px var(--card-sh-2);  /* Dashlet */
+        display:flex;flex-direction:column;overflow:hidden}
+  .dash-hd{display:flex;align-items:center;gap:10px;flex-shrink:0;width:100%;  /* dashlet/header/gap-xs */
+           height:50px;padding:0 15px;                              /* header height · padding-x */
+           background:var(--dash-hd-bg);border:none;border-bottom:1px solid var(--dash-hd-border);
+           font:inherit;text-align:left;cursor:pointer}
+  .dash-hd:hover{background:var(--dash-hd-hover)}                   /* dashlet/header/hover-bg */
+  .dash-hd svg{flex:0 0 20px;color:var(--dash-hd-icon);transition:transform .12s}
+  .dash-hd[aria-expanded="false"] svg{transform:rotate(-90deg)}
+  .dash-hd[aria-expanded="false"]{border-bottom-color:transparent}
+  @media (prefers-reduced-motion:reduce){.dash-hd svg{transition:none}}
+  .dash-hd h2{margin:0;font-size:20px;line-height:30px;font-weight:600;
+              color:var(--dash-hd-title)}                           /* Headings/H3/Semibold */
+  .dash-hd .cnt{margin-left:auto;color:var(--text-2);font-size:12px;line-height:15px;font-weight:600}
+  /* portlet/content-template-padding-{x, y-top, y-bottom} */
+  .dash-bd{padding:15px 15px 30px;overflow:auto;flex:1 1 auto}
+  /* sizes/gap/m all round for the table panels too — the grid reads better held
+     off the dashlet's own edges than running flush into them. */
+  .dash-bd.flush{padding:15px;overflow:visible}
+
+
+  .dash table{width:100%;border-collapse:collapse}
+  .dash thead th{position:static;background:transparent;height:auto;padding:0 8px 8px 0;
+                 border-bottom:1px solid var(--tbl-border)}
+  /* Rows are as tall as their tallest cell — a two-line name, a progress bar with
+     its label row — so everything in them centres on that rather than hanging
+     from the top. */
+  .dash tbody td{height:auto;min-height:0;padding:9px 8px 9px 0;border-bottom:1px solid var(--tbl-border);
+                 vertical-align:middle}
+  .dash tbody tr:last-child td{border-bottom:none}
+  /* Left-aligned like every other column — the DS table has no right-aligned
+     numeric variant, and a chip does not need one to line up. */
+  .dash .num{text-align:left;white-space:nowrap;font-variant-numeric:tabular-nums;
+             width:1%;padding-left:15px}                     /* sizes/gap/m */
+
+  /* Chip / Outline · base · round · medium — DS - Advanced node 86:208605, no
+     icon. A count, not a control: transparent fill and a hairline rule, so it
+     reads as a value that has been measured rather than something to click. */
+  .chip{display:inline-flex;align-items:center;justify-content:center;
+        gap:5px;                                             /* chip/gap 5 */
+        min-width:30px;                                      /* chip/medium-min-width 30 */
+        max-width:200px;                                     /* chip/medium-label-max-width 200 */
+        padding:2.5px 5px;                                   /* chip/medium-padding-y 2.5 · -x 5 */
+        border:1px solid var(--chip-border);                 /* chip/border-width 1 · outline/base/resting-border */
+        border-radius:100px;                                 /* chip/round-radius 100 */
+        background:transparent;                              /* chip/outline/base/resting-bg #ffffff00 */
+        color:var(--tbl-main);                               /* chip/outline/base/secondary-text */
+        font-size:14px;line-height:20px;font-weight:400;     /* Body/Regular 14/20 */
+        font-variant-numeric:tabular-nums}
+  .dash .course{color:var(--text-2);font-size:12px;line-height:15px}  /* Caption/Regular */
+  .dash .course.none{font-style:italic}
+  .link-mark{color:var(--text-3);padding:0 4px}
+
+  /* Status / Flat — status/flat/bg #ffffff00 and status/flat/padding-x 0, i.e. a
+     text-only status with no pill. Statuses/Semibold/Medium 12/20 600, uppercased
+     so the word itself carries the state and colour is never the only signal. */
+  .tstat{display:inline-block;padding:0;background:none;text-transform:uppercase;
+         font-size:12px;line-height:20px;font-weight:600}
+  /* The saturated green (#25861e) measures 4.66:1 on white but only 4.06 on the
+     row-hover fill and 3.60 on selected — under AA for 12px semibold. This is the
+     same green the DS uses for text on its green status pill, and it clears every
+     background the row can take (9.36 / 8.16 / 7.23). */
+  /* status/flat/* — DS Base 15380:114618. Used wherever the real token clears AA
+     at 12px semibold on BOTH white and the row-hover fill:
+       status/flat/purple #7349aa  6.44 / 5.61
+       status/flat/grey   #576581  5.86 / 5.11
+     Two do not, and stand in rather than being used:
+       status/flat/green #25861e is 4.66 / 4.06 -> #14520f (9.36 / 8.16)
+       status/flat/blue  #367ca0 is 4.62 / 4.03 -> brand #1f6aac (5.65 / 4.93) */
+  .t-done{color:#14520f}
+  .t-progress{color:var(--brand)}
+  .t-pending{color:var(--amb-sat)}
+  .t-notstart,.t-none{color:var(--text-2)}   /* status/flat/grey */
+
+  /* Graphics/Progress Bar/Small — height 10, radius 100, gap 5 between the track
+     and its label row. The fill colour is banded by percentage, per the
+     progress-bar/{10,11-99,100}-percent-track-bg variables. */
+  .pbar{display:flex;flex-direction:column;gap:5px;min-width:140px}
+  .ptrack{height:10px;border-radius:100px;background:var(--pb-track);overflow:hidden}
+  .pfill{height:100%;border-radius:100px}
+  .p100{background:var(--pb-100)}
+  .p1199{background:var(--pb-1199)}
+  .p10{background:var(--pb-10)}
+  .pmeta{display:flex;justify-content:space-between;gap:5px;
+         font-size:14px;line-height:20px}          /* Body/Regular */
+  .pmeta .pct{color:var(--pb-label)}
+  .pmeta .pof{color:var(--pb-add)}
+
+  /* Delegated task numbers, the way a paper DOA log lists them. The number is
+     decodable from the "#" column of the coverage dashlet below. */
+  .tasks{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+  .task{display:inline-flex;align-items:center;justify-content:center;min-width:24px;
+        padding:2px 7px;border-radius:var(--r);background:var(--panel);
+        color:var(--text);font-size:12px;line-height:15px;font-weight:600;
+        font-variant-numeric:tabular-nums}
+  .dash .no{color:var(--text-2);font-variant-numeric:tabular-nums;
+            white-space:nowrap;width:1%;padding-right:12px}
+
+  /* Required training — the course count beside an overdue marker. Not a Status:
+     it counts an exception rather than reporting a state, which is why it keeps
+     the warning glyph the Status components gave up. */
+  .actcol{width:1%;white-space:nowrap;padding-right:15px}
+  .pcol{width:200px;padding-left:15px}   /* room for the bar plus its label row */
+  .req{display:inline-flex;align-items:center;gap:10px}          /* sizes/gap/s */
+  .req .n{color:var(--text-2);font-size:14px;line-height:20px}   /* Body/Regular · text/secondary */
+  .odue{display:inline-flex;align-items:center;gap:5px;          /* status/gap */
+        padding:0 5px;border-radius:100px;                       /* status/solid/padding-x · chip/round-radius */
+        background:var(--red-subtle);                            /* status/solid/red-subtle */
+        color:var(--overdue);
+        font-size:12px;line-height:20px;font-weight:600;         /* Statuses/Semibold/Medium */
+        white-space:nowrap}
+  .odue svg{flex:0 0 15px}                                       /* icons/solid/s */
+  .odue b{font-weight:700}
+
+  /* Delegated task numbers, the way a paper DOA log lists them. The number is
+     decodable from the "#" column of the coverage dashlet below. */
+  .tasks{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+  .task{display:inline-flex;align-items:center;justify-content:center;min-width:24px;
+        padding:2px 7px;border-radius:var(--r);background:var(--panel);
+        color:var(--text);font-size:12px;line-height:15px;font-weight:600;
+        font-variant-numeric:tabular-nums}
+  .dash .no{color:var(--text-2);font-variant-numeric:tabular-nums;
+            white-space:nowrap;width:1%;padding-right:12px}
+
+  /* Chip / Outline · base · round · medium — DS - Advanced node 86:208605, no icon.
+     The fill is transparent (chip/outline/base/resting-bg #ffffff00), so the count
+     reads as a marker rather than competing with the status pills to its right. */
+
+  /* Table/Cell/Value, type=Link — DS - Advanced node 86:208598.
+     A Button/Link whose glyph and label are both button/link/primary/resting-text;
+     only the Label carries the underline border, transparent until hover. */
+  /* The button hugs its label so the underline spans the text, not the cell. */
+  .clink{display:inline-flex;align-items:center;gap:5px;             /* button/link/gap */
+         max-width:100%;padding:0;border:none;background:none;
+         color:var(--brand);cursor:pointer;text-align:left;
+         border-radius:var(--r)}                                     /* button/link/radius */
+  .clink .lb{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+             font-family:inherit;font-size:14px;line-height:20px;font-weight:400;  /* Buttons/Medium-Link */
+             border-bottom:1px solid transparent}                    /* button/link/border-weight */
+  /* hover / pressed reveal button/link/primary/{hover,pressed}-underline */
+  .clink:hover .lb, .clink:active .lb{border-bottom-color:currentColor}
+  /* Focus is the component's own treatment: surface/surface-subtlest plus
+     Focus-outer (1px white, 3px #1f6aac), not the generic page outline. */
+  .clink:focus-visible{outline:none;background:var(--card-bg);
+                       box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+
+  /* No link to give yet, but the row is still actionable: the cell is a button
+     onto the same candidate picker the Action column opens, so the problem text
+     itself is the way in. Body/Regular in table/cell/value/main-text with the
+     hover underline the resolved contact's link uses. */
+  .cissue{display:inline-flex;align-items:center;vertical-align:middle;
+          gap:5px;                                             /* table/cell/value/gap */
+          padding:0;border:none;background:none;cursor:pointer;text-align:left;
+          border-radius:var(--r);
+          color:var(--tbl-main);
+          font-family:inherit;font-size:14px;line-height:20px;font-weight:400}
+  .cissue svg{flex:0 0 20px}                                   /* icons/solid/m */
+  .cissue .txt{border-bottom:1px solid transparent}
+  .cissue:hover .txt, .cissue:active .txt{border-bottom-color:currentColor}
+  .cissue:focus-visible{outline:none;background:var(--card-bg);
+                        box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+  .btn-xs{display:inline-flex;align-items:center;justify-content:center;gap:5px;
+          min-width:45px;padding:5px 10px;                    /* button/solid/small-paddings */
+          border:1px solid var(--chip-border);border-radius:var(--r);
+          background:transparent;color:var(--brand);cursor:pointer;
+          font-size:12px;line-height:15px;font-weight:600}    /* Buttons/Small */
+  .btn-xs:hover{background:var(--brand-4)}
+
+
+  /* ── audit ──────────────────────────────────────────────── */
+  .foot{margin-top:16px}
+  .pane{background:var(--white);border:1px solid var(--line-soft);border-radius:10px}
+  .pane h2{margin:0;padding:13px 16px;font-size:14px;line-height:20px;font-weight:600;
+           border-bottom:1px solid var(--line-soft)}
+  .pane .body{padding:14px 16px}
+  .audit{list-style:none;margin:0;padding:0;font-size:14px;line-height:20px}  /* Body/Regular */
+  .audit .k{flex:0 0 150px}
+  .audit li{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid var(--line-soft)}
+  .audit li:last-child{border-bottom:none}
+  .audit .k{flex:0 0 128px;color:var(--text-2)}
+  .audit .v{font-weight:600;word-break:break-word}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1 class="sr">Cross-module check</h1>
+
+  <p class="sr" id="live" role="status" aria-live="polite"></p>
+
+  <!-- at a glance -->
+  <div class="tiles" role="group" aria-label="Filter rows by outcome">
+    <button class="tile" type="button" data-filter="all" aria-pressed="true">
+      <span class="l">Delegated team members</span>
+      <span class="v"><span class="ic" id="i-all"></span><span class="n">9</span></span>
+    </button>
+    <button class="tile" type="button" data-filter="ok" data-accent="green" aria-pressed="false">
+      <span class="l">Training complete</span>
+      <span class="v"><span class="ic" id="i-ok"></span><span class="n" id="n-ok">7</span></span>
+    </button>
+    <button class="tile" type="button" data-filter="warn" data-accent="orange" id="tile-warn" aria-pressed="false">
+      <span class="l">Training incomplete</span>
+      <span class="v"><span class="ic" id="i-warn"></span><span class="n" id="n-warn">1</span></span>
+    </button>
+    <button class="tile" type="button" data-filter="amb" data-accent="purple" id="tile-amb" aria-pressed="false">
+      <span class="l">Needs clarifications</span>
+      <span class="v"><span class="ic" id="i-amb"></span><span class="n" id="n-amb">1</span></span>
+    </button>
+  </div>
+
+  <section class="dash" aria-labelledby="d2-t">
+    <button class="dash-hd" type="button" aria-expanded="true" aria-controls="d2-body">
+      <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 6 8 10.5 12.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <h2 id="d2-t">Training Log</h2>
+      <span class="cnt" id="d2-cnt"></span>
+    </button>
+    <div class="dash-bd flush" id="d2-body">
+      <div class="scroll">
+      <table>
+        <caption class="sr">Delegated team members with resolved contact, delegated duty, required training and status</caption>
+        <thead>
+          <tr>
+            <th scope="col"><span class="sr">Expand</span></th>
+            <th scope="col">Name on document</th>
+            <th scope="col">Resolved contact</th>
+            <th scope="col" class="ctr">Delegated duty</th>
+            <th scope="col" class="ctr">Required training</th>
+            <th scope="col">Training status</th>
+            <th scope="col">Training progress</th>
+            <th scope="col">Action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+        <tbody id="empty" hidden><tr><td colspan="8" class="empty">No rows match this filter.</td></tr></tbody>
+      </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="dash" aria-labelledby="d1-t">
+      <button class="dash-hd" type="button" aria-expanded="true" aria-controls="d1-body">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3.5 6 8 10.5 12.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <h2 id="d1-t">Duty &rarr; course coverage</h2>
+        <span class="cnt" id="d1-cnt"></span>
+      </button>
+      <div class="dash-bd" id="d1-body">
+        <table>
+          <thead><tr>
+            <th scope="col" class="no">#</th>
+            <th scope="col">Delegated duty</th>
+            <th scope="col">Linked LMS course</th>
+            <th scope="col" class="num">Assigned</th>
+            <th scope="col" class="pcol">Training progress</th>
+          </tr></thead>
+          <tbody id="d1-rows"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Change log — Dialog, DS - Advanced | IN PROGRESS | 2.0, node 35:11233.
+       Native <dialog> so Esc, the focus trap and inertness come from the platform. -->
+  <!-- Alerts float over the report; role=status announces without stealing focus. -->
+  <div class="alerts" id="alerts" role="status" aria-live="polite"></div>
+
+  <!-- Enrol picker — the same Dialog as the change log (node 35:11233). -->
+  <dialog id="enroldlg" aria-labelledby="en-title">
+    <div class="dlg-bar">
+      <h2 id="en-title">Enroll</h2>
+      <button class="dlg-x" type="button" id="en-x" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="dlg-content">
+      <p class="dlg-lead" id="en-lead"></p>
+      <ul class="enrol" id="en-list"></ul>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="en-cancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="en-go">Enroll</button>
+    </div>
+  </dialog>
+
+  <!-- Reminder picker — the same Dialog again (node 35:11233). -->
+  <dialog id="remdlg" aria-labelledby="rm-title">
+    <div class="dlg-bar">
+      <h2 id="rm-title">Send reminder</h2>
+      <button class="dlg-x" type="button" id="rm-x" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="dlg-content">
+      <p class="dlg-lead" id="rm-lead"></p>
+      <ul class="enrol" id="rm-list"></ul>
+      <p class="dlg-note" id="rm-to"></p>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="rm-cancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="rm-go">Send reminder</button>
+    </div>
+  </dialog>
+
+  <!-- Contact picker — the same Dialog again (node 35:11233). -->
+  <dialog id="contactdlg" aria-labelledby="ct-title">
+    <div class="dlg-bar">
+      <h2 id="ct-title">Select contact</h2>
+      <button class="dlg-x" type="button" id="ct-x" aria-label="Close">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="dlg-content">
+      <p class="dlg-lead" id="ct-lead"></p>
+      <div class="cands" id="ct-list" role="radiogroup" aria-labelledby="ct-title"></div>
+    </div>
+    <div class="dlg-foot">
+      <button class="btn" type="button" id="ct-cancel">Cancel</button>
+      <button class="btn btn-primary" type="button" id="ct-go" disabled>Link contact</button>
+    </div>
+  </dialog>
+
+  <dialog id="changelog" aria-labelledby="cl-title">
+    <div class="dlg-bar">
+      <h2 id="cl-title">Change log</h2>
+      <button class="dlg-x" type="button" id="cl-x" aria-label="Close change log">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="dlg-content"><ul class="audit" id="audit"></ul></div>
+  </dialog>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var I = {
+    okM: '<svg class="ic" width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    warnM: '<svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 15 14H1L8 1.6Z" fill="#af620b"/><path d="M8 6.2v3.4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".95" fill="#fff"/></svg>',
+    warnSolid: '<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 15 14H1L8 1.6Z" fill="currentColor"/><path d="M8 6.2v3.4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.6" r=".95" fill="#fff"/></svg>',
+    cOk:   '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#25861e"/><path d="M4.8 8.2l2.2 2.2 4.2-4.4" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    cWarn: '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 1.6 15 14H1L8 1.6Z" fill="#d1862e"/><path d="M8 6.2v3.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="11.6" r="1" fill="#fff"/></svg>',
+    cAmb:  '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#7349aa"/><path d="M6.1 6.2a1.95 1.95 0 1 1 2.6 1.85c-.45.16-.7.5-.7.95v.35" stroke="#fff" stroke-width="1.5" fill="none" stroke-linecap="round"/><circle cx="8" cy="11.8" r="1" fill="#fff"/></svg>',
+    people: '<svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6" cy="5.4" r="2.6" stroke="#949daf" stroke-width="1.4"/><path d="M1.6 13.4c0-2.3 2-4 4.4-4s4.4 1.7 4.4 4" stroke="#949daf" stroke-width="1.4" stroke-linecap="round"/><path d="M11.2 3.2a2.4 2.4 0 0 1 0 4.4M12.2 9.8c1.3.5 2.2 1.7 2.2 3.6" stroke="#949daf" stroke-width="1.4" stroke-linecap="round"/></svg>',
+    chev: '<svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  };
+  var CLS = { ok:'st-ok', warn:'st-warn', amb:'st-amb', yellow:'st-yellow' };
+  var LABEL = {
+    ok:'Matched · training complete', warn:'Matched · training incomplete',
+    amb:'Ambiguous · needs review'
+  };
+  // Status/Solid has no icon — the uppercase label is the whole component, which
+  // is also why removing it costs nothing for the never-colour-only rule.
+  function st(k, label) {
+    return '<span class="st ' + CLS[k] + '">' + (label || LABEL[k]) + '</span>';
+  }
+
+  var RUN_AT = '12 Mar 2026, 09:42 CET';
+  var RUN_DATE = new Date('2026-03-12T09:42:00');
+
+  /**
+   * How far past its due date an outstanding training is, in whole days, counted
+   * from the run date — so the number can never drift out of step with RUN_AT.
+   * Returns 0 when nothing is overdue.
+   */
+  function daysOverdue(m) {
+    if (!m.due || m.k === 'amb') return 0;
+    var due = new Date(m.due + ' 00:00:00');
+    var days = Math.floor((RUN_DATE - due) / 86400000);
+    return days > 0 ? days : 0;
+  }
+
+
+  // ── Scenario — Site: Madrid, 9 delegated team members ───────────────────
+  // A delegated duty is qualified by at most one LMS course. Two duties can
+  // share a course (sample processing and vital signs both need Sample
+  // Handling), which is why coverage has to be counted per duty, not per course.
+  // A duty may also have **no** course linked yet (course: null) — that is a gap
+  // in the training catalogue, not in any one person's record, so it is reported
+  // on the duty rather than counted against the people assigned to it.
+  // A delegated task is qualified by at most one course, so the progress bar
+  // counts tasks, not modules: one task = one training. Two tasks that happen to
+  // share a course therefore count twice for someone holding both — each task
+  // has to be qualified on its own, even by the same course.
+  var DUTY = {
+    oversight:   { name:'Oversight & final eligibility sign-off', course:'Protocol Training — Investigator Responsibilities' },
+    eligibility: { name:'Eligibility assessments',                course:'Protocol Training — Eligibility Criteria & Assessment' },
+    consent:     { name:'Informed consent process',               course:'GCP — Informed Consent' },
+    source:      { name:'Source data entry',                      course:null },
+    ae:          { name:'Adverse event assessment',               course:'Safety Reporting — AE/SAE' },
+    vitals:      { name:'Vital signs & sample collection',        course:'Sample Handling & Processing' },
+    sample:      { name:'Sample processing',                      course:'Sample Handling & Processing' },
+    ip:          { name:'IP accountability & dispensing',         course:'Investigational Product Management' },
+    ecrf:        { name:'eCRF completion',                        course:'EDC System — Data Entry' }
+  };
+  var DUTY_ORDER = ['oversight','eligibility','consent','source','ae','vitals','sample','ip','ecrf'];
+  // Each duty gets the number it carries on the log; the chips in the grid and
+  // the "#" column of the coverage dashlet are the same numbering.
+  DUTY_ORDER.forEach(function (k, i) { DUTY[k].no = i + 1; });
+
+  // `unenrolled` lists the tasks whose course the person has no enrolment record
+  // for — a subset of `missing`, and a different problem from being enrolled and
+  // late (a `due` date in the past). It is per-task, not a flag on the person, so
+  // enrolling in one course leaves the others pending.
+  // k: ok = resolved and fully trained · warn = resolved, a course outstanding
+  //    amb = not resolved to a contact, so training cannot be checked at all
+  // missing: duty keys whose course this person has not completed
+  var TEAM = [
+    { id:'r1', k:'ok',   name:'Dr. Marta Solís', role:'Principal Investigator', contact:'Marta Solís', cid:'CT-40021',
+      duties:['oversight','eligibility','consent','source','ae','ecrf'], missing:[], done:'26 Sep 2025' },
+    { id:'r2', k:'warn', name:'Dr. Elena Ruiz',  role:'Sub-Investigator',       contact:'Elena Ruiz',  cid:'CT-40114',
+      duties:['eligibility','consent','source','ae'], missing:['eligibility','ae'], unenrolled:['eligibility','ae'] },
+    { id:'r3', k:'ok',   name:'Javier Moreno',   role:'Study Coordinator',      contact:'Javier Moreno', cid:'CT-40157',
+      duties:['consent','source','vitals','ip','ecrf'], missing:[], done:'12 Nov 2025' },
+    { id:'r4', k:'ok',   name:'Lucía Ferrer',    role:'Study Coordinator',      contact:'Lucía Ferrer', cid:'CT-40163',
+      duties:['consent','source','vitals','ecrf'], missing:[], done:'03 Oct 2025' },
+    { id:'r5', k:'ok',   name:'Dr. Andrés Gil',  role:'Sub-Investigator',       contact:'Andrés Gil',  cid:'CT-40188',
+      duties:['eligibility','consent','source','ae'], missing:[], done:'19 Jan 2026' },
+    { id:'r6', k:'warn', name:'Carmen Ortega',   role:'Research Nurse',         contact:'Carmen Ortega', cid:'CT-40204',
+      duties:['source','vitals','sample','ecrf'], missing:['vitals'], unenrolled:[], act:'28 Feb 2026', due:'15 Jan 2026' },
+    { id:'r7', k:'amb',  name:'A. Delgado',      role:'Research Nurse',         contact:null, cid:null,
+      duties:['source','vitals','sample','ecrf'], missing:[] },
+    { id:'r8', k:'ok',   name:'Pablo Navarro',   role:'Pharmacist',             contact:'Pablo Navarro', cid:'CT-40311',
+      duties:['source','ip','ecrf'], missing:[], done:'07 Feb 2026' },
+    { id:'r9', k:'ok',   name:'Sofía Márquez',   role:'Data Entry',             contact:'Sofía Márquez', cid:'CT-40352',
+      duties:['source','ecrf'], missing:[], done:'15 Dec 2025' }
+  ];
+
+  /**
+   * The two contacts that match "A. Delgado" at this site. Everything shown is
+   * something a person would weigh: same role, same site, same training — the
+   * decisive difference is which of them the site actually put on the log.
+   */
+  var CANDIDATES = [
+    { id:'CT-40218', name:'Ana Delgado', initials:'AD', tint:'#1f6aac',
+      role:'Research Nurse', status:'Active', site:'Madrid (Site 001)',
+      email:'a.delgado@madrid-site.example', added:'14 Jan 2026',
+      training:'Sample Handling & Processing \u2014 complete',
+      onLog:'Signature on file, matches the delegation log' },
+    { id:'CT-40873', name:'Andrea Delgado', initials:'AD', tint:'#7349aa',
+      role:'Research Nurse', status:'Active', site:'Madrid (Site 001)',
+      email:'andrea.delgado@madrid-site.example', added:'02 Mar 2026',
+      training:'Sample Handling & Processing \u2014 complete',
+      onLog:'No signature on file for this study' }
+  ];
+
+  /** The people with an outstanding course, in row order. */
+  function flagged() { return TEAM.filter(function (m) { return m.k === 'warn'; }); }
+
+  /**
+   * The courses a person still owes, as a set. `missing` is written per task,
+   * but training is held per COURSE — so if two tasks share one course, an
+   * outstanding course makes both tasks outstanding. Deriving it this way is
+   * what stops the same course reading "Complete" on one row and "Not
+   * completed" on the next.
+   */
+  function missingCourses(m) {
+    var set = {};
+    m.missing.forEach(function (k) { if (DUTY[k].course) set[DUTY[k].course] = 1; });
+    return set;
+  }
+
+  /** The courses the person has no enrolment record for, as a set. */
+  function unenrolledCourses(m) {
+    var set = {};
+    (m.unenrolled || []).forEach(function (k) { if (DUTY[k].course) set[DUTY[k].course] = 1; });
+    return set;
+  }
+
+  /** Training state for one person on one duty. */
+  function dutyState(m, key) {
+    if (!DUTY[key].course) return 'nocourse';                  // nothing to complete yet
+    if (m.k === 'amb') return 'pending';                       // no contact, nothing to check
+    if (!missingCourses(m)[DUTY[key].course]) return 'complete';
+    // Outstanding, but there is a difference between not having finished a
+    // course and having no enrolment to finish. The Enroll action keys off the
+    // second, so at least one course must say so.
+    return unenrolledCourses(m)[DUTY[key].course] ? 'unenrolled' : 'incomplete';
+  }
+
+  /** How many of a person's duties actually have a course behind them. */
+  function courseCount(m) {
+    return m.duties.filter(function (k) { return !!DUTY[k].course; }).length;
+  }
+
+  /**
+   * Training behind a person's delegated tasks — one task, one training. The
+   * denominator is the tasks that actually have a course linked, which is the
+   * same number the Required training column shows, so the two agree by
+   * construction. A task with no course linked is in neither number.
+   */
+  function trainingFor(m) {
+    var linked = m.duties.filter(function (k) { return !!DUTY[k].course; });
+    var done = linked.filter(function (k) { return dutyState(m, k) === 'complete'; }).length;
+    return {
+      total: linked.length,
+      done: done,
+      pct: linked.length ? Math.round((done / linked.length) * 100) : 0,
+    };
+  }
+
+  /** The Training status column: a Status/Flat word plus the date behind it. */
+  function trainingStatus(m) {
+    if (m.k === 'amb') return { k:'pending',  label:'Pending', date:null };
+    var t = trainingFor(m);
+    if (!t.total)      return { k:'none',     label:'No linked courses', date:null };
+    if (t.pct === 100) return { k:'done',     label:'Completed',   date:m.done };
+    if (t.done === 0)  return { k:'notstart', label:'Not started', date:null };
+    return { k:'progress', label:'In progress', date:m.act };
+  }
+
+  function statusCell(m) {
+    var s = trainingStatus(m);
+    // Overdue lives in the Required training column now, so this cell is back to
+    // the state and the date behind it.
+    return '<span class="tstat t-' + s.k + '">' + s.label + '</span>' +
+           (s.date ? '<div class="sub">' + s.date + '</div>' : '');
+  }
+
+  /** Graphics/Progress Bar/Small, banded by the progress-bar/*-percent variables. */
+  function progressCell(m) {
+    if (m.k === 'amb') return '<span class="sub">Not checked yet</span>';
+    var t = trainingFor(m);
+    if (!t.total) return '<span class="sub">&mdash;</span>';
+    var band = t.pct === 100 ? 'p100' : t.pct <= 10 ? 'p10' : 'p1199';
+    return '<div class="pbar">' +
+      '<div class="ptrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" ' +
+        'aria-valuenow="' + t.pct + '" aria-label="' + t.done + ' of ' + t.total + ' trainings complete">' +
+        '<div class="pfill ' + band + '" style="width:' + t.pct + '%"></div></div>' +
+      '<div class="pmeta"><span class="pct">' + t.pct + '%</span>' +
+      '<span class="pof">' + t.done + ' of ' + t.total + '</span></div></div>';
+  }
+
+  var $  = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var live = $('#live');
+  function say(m) { live.textContent = m; }
+
+  // Card/Overview glyphs — the same semantic marks the rows use, at 20px.
+  // The all-rows card takes card/overview/default-icon.
+  $('#i-all').innerHTML  = I.people;
+  $('#i-ok').innerHTML   = I.cOk;
+  $('#i-warn').innerHTML = I.cWarn;
+  $('#i-amb').innerHTML  = I.cAmb;
+
+  // ── Detail bodies ───────────────────────────────────────────────────────
+  /** One duty row inside a person's expanded detail. */
+  function dutyRow(m, key) {
+    var d = DUTY[key], stt = dutyState(m, key);
+    // No course linked means there is no training state to report — the course
+    // cell already says so, and a status here would invent one.
+    var mark = stt === 'nocourse'   ? ''
+             : stt === 'complete'   ? st('ok',     'Completed')
+             : stt === 'unenrolled' ? st('yellow', 'Pending enrollment')
+             : stt === 'incomplete' ? st('warn',   'Not completed')
+             :                        st('amb',    'Pending contact');
+    var due = stt === 'incomplete' && m.due
+      ? '<div class="overdue">Due ' + m.due +
+        (daysOverdue(m) ? ' &middot; overdue by ' + daysOverdue(m) + ' days' : '') + '</div>'
+      : '';
+    return '<tr>' +
+      '<td class="no">' + d.no + '</td>' +
+      '<td>' + d.name + '</td>' +
+      '<td>' + courseLink(d) + due + '</td>' +
+      '<td class="stcol">' + mark + '</td></tr>';
+  }
+
+  /**
+   * A person's duties as a nested table — the Table component's expanded-row
+   * pattern: the child records get their own header row, indented under the
+   * parent and tied to it by the brand rule down the left.
+   */
+  function dutyTable(m) {
+    return '<table class="sub"><thead><tr>' +
+      '<th scope="col" class="no">#</th>' +
+      '<th scope="col">Delegated duty</th>' +
+      '<th scope="col">Linked LMS course</th>' +
+      '<th scope="col" class="stcol">Course status</th>' +
+      '</tr></thead><tbody>' +
+      m.duties.map(function (k) { return dutyRow(m, k); }).join('') +
+      '</tbody></table>';
+  }
+
+  // The expansion is the nested table and nothing else — the callout, the two
+  // actions and the candidate picker all lived here and were removed.
+  function detailFor(m) {
+    return dutyTable(m);
+  }
+
+  /** The delegated task numbers for one person, as chips. */
+  function taskChips(m) {
+    return '<div class="tasks">' + m.duties.map(function (k) {
+      var d = DUTY[k];
+      return '<span class="task" title="' + d.name + '">' + d.no + '</span>';
+    }).join('') + '</div>';
+  }
+
+  /**
+   * The linked LMS course as a Button/Link into the training system — the same
+   * Table/Cell/Value type=Link the resolved contact uses, so the two records
+   * this check reaches out to are opened the same way.
+   */
+  function courseLink(d) {
+    if (!d.course) return '<span class="course none">&mdash; none linked &mdash;</span>';
+    return '<button class="clink course-link" type="button" data-course="' + d.course +
+           '" title="Open &ldquo;' + d.course + '&rdquo; in the training system">' +
+           '<span class="lb">' + d.course + '</span></button>';
+  }
+
+  /**
+   * Required training — how many courses the person's delegated tasks call for,
+   * and how many of those are past their due date. The count is plain text; the
+   * overdue marker only appears when there is one to report.
+   */
+  /**
+   * The one thing that would move this person forward, or nothing at all.
+   * Ordered by what blocks what: an unresolved contact makes the training
+   * unreadable, a missing enrolment makes a reminder pointless, and a reminder
+   * is only worth sending once the record exists and has gone past due.
+   */
+  function actionFor(m) {
+    // A contact mismatch makes the training record unreadable, so nothing else
+    // can be judged until it is settled.
+    if (m.k === 'amb') return { act:'select', label:'Select contact' };
+    if (!m.missing.length) return null;
+    // Something must be completed. Either there is no enrolment to complete it
+    // against, or there is one and it has not been finished yet.
+    return (m.unenrolled || []).length
+      ? { act:'enroll', label:'Enroll' }
+      : { act:'remind', label:'Send reminder' };
+  }
+
+  function actionCell(m) {
+    var a = actionFor(m);
+    if (!a) return '';
+    var attr = 'data-act2="' + a.act + '"';
+    return '<button class="btn btn-secondary" type="button" ' + attr +
+           ' data-row="' + m.id + '">' + a.label + '</button>';
+  }
+
+  function requiredCell(m) {
+    if (m.k === 'amb') return '<span class="sub">Pending contact selection</span>';
+    var n = courseCount(m);
+    var od = daysOverdue(m) ? 1 : 0;   // one outstanding course per person here
+    return '<span class="req"><span class="n">' + n +
+           (n === 1 ? ' Course' : ' Courses') + '</span>' +
+           (od ? '<span class="odue" title="Overdue by ' + daysOverdue(m) + ' days">' +
+                 I.warnSolid + '<b>' + od + '</b> Overdue</span>' : '') +
+           '</span>';
+  }
+
+  /**
+   * Resolved contact cell. A resolved person is a Button/Link to their contact
+   * record — no ID, the name is the handle. An unresolved one states the problem
+   * and offers the single action that fixes it: Select when several contacts
+   * match, Create when none does.
+   */
+  function contactCell(m) {
+    if (m.contact) {
+      return '<button class="clink" type="button" data-contact="' + m.id + '" title="Open contact record">' +
+             '<span class="lb">' + m.contact + '</span></button>';
+    }
+    var fix = m.k === 'amb'
+      ? { key:'select', text:'2 possible matches', hint:'Choose the correct contact' }
+      : { key:'create', text:'No contact found',   hint:'Create a contact record' };
+    return '<button class="cissue" type="button" data-act2="select" data-row="' + m.id +
+           '" title="' + fix.hint + '">' + I.warnM + '<span class="txt">' + fix.text + '</span></button>';
+  }
+
+  // ── Rows ────────────────────────────────────────────────────────────────
+  var tb = $('#rows');
+
+  function addRow(m) {
+    var tr = document.createElement('tr');
+    tr.className = 'r' + (m.k === 'warn' ? ' attn' : m.k === 'amb' ? ' ambr' : '');
+    tr.dataset.row = m.id; tr.dataset.kind = m.k;
+
+    var duty = taskChips(m);
+    var training = requiredCell(m);
+
+    tr.innerHTML =
+      '<td class="c-disc"><button class="disc" type="button" aria-expanded="false" ' +
+        'aria-controls="d-' + m.id + '" aria-label="Details for ' + m.name + '">' + I.chev + '</button></td>' +
+      '<td><span class="who">' + m.name + '</span><div class="sub">' + m.role + '</div></td>' +
+      '<td class="cellwrap">' + contactCell(m) + '</td>' +
+      '<td class="cellwrap ctr">' + duty + '</td>' +
+      '<td class="cellwrap ctr">' + training + '</td>' +
+      '<td class="cellwrap">' + statusCell(m) + '</td>' +
+      '<td class="cellwrap">' + progressCell(m) + '</td>' +
+      '<td class="actcol">' + actionCell(m) + '</td>';
+    tb.appendChild(tr);
+
+    var dr = document.createElement('tr');
+    dr.className = 'detail'; dr.id = 'd-' + m.id; dr.hidden = true;
+    dr.dataset.detailFor = m.id;
+    dr.innerHTML = '<td colspan="8"><div class="dbox">' + detailFor(m) + '</div></td>';
+    tb.appendChild(dr);
+
+    $('.disc', tr).addEventListener('click', function () { toggle(m.id); });
+  }
+
+  TEAM.forEach(addRow);
+
+  function toggle(id, force) {
+    var tr = $('tr.r[data-row="' + id + '"]');
+    var dr = $('#d-' + id);
+    var btn = $('.disc', tr);
+    var open = force != null ? force : dr.hidden;
+    dr.hidden = !open;
+    tr.classList.toggle('open', open);
+    btn.setAttribute('aria-expanded', String(open));
+    if (open) say(tr.querySelector('.who').textContent + ' — details expanded');
+  }
+
+  // ── Filters — driven by the count tiles ─────────────────────────────────
+  var filter = 'all';
+
+  function setFilter(f) {
+    filter = f;
+    $$('.tile').forEach(function (t) {
+      t.setAttribute('aria-pressed', String(t.dataset.filter === filter));
+    });
+    applyFilters();
+    var tile = $('.tile[data-filter="' + f + '"]');
+    say(f === 'all'
+      ? 'Showing all rows.'
+      : 'Filtered to ' + tile.querySelector('.l').textContent.trim().toLowerCase() + '.');
+  }
+
+  function applyFilters() {
+    var shown = 0;
+    $$('tr.r').forEach(function (tr) {
+      var vis = filter === 'all' || tr.dataset.kind === filter;
+      tr.hidden = !vis;
+      if (vis) shown++;
+      var dr = $('#d-' + tr.dataset.row);
+      if (dr) {
+        dr.style.display = vis ? '' : 'none';
+        if (!vis) {
+          dr.hidden = true;
+          tr.classList.remove('open');
+          $('.disc', tr).setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+    $('#empty').hidden = shown > 0;
+  }
+
+  // Counts are derived from the rows, so resolving a row updates them.
+  function refreshCounts() {
+    var real = $$('tr.r');
+    var n = { ok:0, warn:0, amb:0 };
+    real.forEach(function (tr) { n[tr.dataset.kind] = (n[tr.dataset.kind] || 0) + 1; });
+    $('#n-ok').textContent   = n.ok;
+    $('#n-warn').textContent = n.warn;
+    $('#n-amb').textContent  = n.amb;
+
+    // A tile with nothing behind it is not a filter worth offering, and a
+    // greyed-out zero is still something to read past — so it goes entirely.
+    // The grid is auto-fit, so the ones that remain take the space back.
+    [['warn', n.warn], ['amb', n.amb]].forEach(function (pair) {
+      $('#tile-' + pair[0]).hidden = pair[1] === 0;
+    });
+    // If the active filter just emptied, fall back to All rather than a blank table.
+    if (filter !== 'all' && n[filter] === 0) setFilter('all');
+  }
+
+  $$('.tile').forEach(function (t) {
+    t.addEventListener('click', function () {
+      // clicking the active status tile returns to All
+      setFilter(t.dataset.filter === filter && filter !== 'all' ? 'all' : t.dataset.filter);
+    });
+  });
+
+  refreshCounts();
+  applyFilters();
+
+  // ── Actions ─────────────────────────────────────────────────────────────
+  var takenActions = [];
+
+  // Neither target exists in a self-contained demo, so the links report the
+  // navigation instead of faking a destination.
+  var ACT2 = {
+    enroll: { done:'Enrolled', msg:'enrolled in the outstanding course' },
+    remind: { done:'Reminder sent', msg:'sent a reminder for the outstanding course' },
+    select: { done:'Contact selection opened', msg:'opened contact selection' }
+  };
+  /**
+   * Alert — one at a time, replacing whatever was there. It sits inside the
+   * aria-live region, so showing it is the announcement; nothing calls say() for
+   * the same event as well.
+   */
+  function showAlert(type, title) {
+    $('#alerts').innerHTML =
+      '<div class="alert a-' + type + '">' + I.okM +
+      '<span class="t">' + title + '</span>' +
+      '<button class="alert-x" type="button" aria-label="Dismiss">' +
+      '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+      '<path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>' +
+      '</button></div>';
+  }
+  $('#alerts').addEventListener('click', function (e) {
+    if (e.target.closest('.alert-x')) $('#alerts').innerHTML = '';
+  });
+
+  // ── Reminder picker ─────────────────────────────────────────────────────
+  var remDlg = $('#remdlg'), remFor = null;
+
+  /** The courses this person is enrolled in but has not finished, once each. */
+  function outstandingEnrolled(m) {
+    return m.duties.filter(function (k) { return dutyState(m, k) === 'incomplete'; })
+      .filter(function (k, i, all) {
+        return all.findIndex(function (o) { return DUTY[o].course === DUTY[k].course; }) === i;
+      });
+  }
+
+  function openReminder(m) {
+    remFor = m;
+    var keys = outstandingEnrolled(m);
+    var od = daysOverdue(m);
+    $('#rm-title').textContent = 'Send reminder to ' + m.contact;
+    $('#rm-lead').textContent = keys.length === 1
+      ? 'One course is enrolled but not completed. Confirm to send a reminder.'
+      : keys.length + ' courses are enrolled but not completed. Choose which to remind about.';
+    $('#rm-list').innerHTML = keys.map(function (k) {
+      var d = DUTY[k];
+      var when = m.due
+        ? (od ? '<span class="overdue">Due ' + m.due + ' &middot; overdue by ' + od + ' days</span>'
+              : 'Due ' + m.due)
+        : 'No due date set';
+      return '<li><label><input type="checkbox" checked value="' + k + '">' +
+             '<span><span class="cn">' + d.course + '</span>' +
+             '<span class="dt" style="display:block">Required by: ' + d.name + ' &middot; ' + when + '</span>' +
+             '</span></label></li>';
+    }).join('');
+    $('#rm-to').textContent = 'The reminder goes to ' + m.contact + ' (' + m.cid + ').';
+    remDlg.showModal();
+    $('#rm-list input').focus();
+  }
+
+  $('#rm-x').addEventListener('click', function () { remDlg.close(); });
+  $('#rm-cancel').addEventListener('click', function () { remDlg.close(); });
+
+  $('#rm-go').addEventListener('click', function () {
+    var picked = $$('#rm-list input:checked').map(function (i) { return i.value; });
+    if (!picked.length) { say('Select at least one course to remind about.'); return; }
+    var m = remFor;
+    var names = picked.map(function (k) { return DUTY[k].course; });
+    // A reminder does not complete anything, so nothing about the row changes —
+    // the action stays available, because it can be sent again.
+    takenActions.push(m.contact + ' \u2014 reminded about ' + names.join(', '));
+    buildAudit();
+    remDlg.close();
+    showAlert('success', 'Reminder sent to ' + m.contact + ' for ' + picked.length +
+              (picked.length === 1 ? ' course' : ' courses'));
+  });
+
+  // ── Contact picker ──────────────────────────────────────────────────────
+  var ctDlg = $('#contactdlg'), ctFor = null;
+
+  function openContact(m) {
+    ctFor = m;
+    $('#ct-lead').textContent = CANDIDATES.length + ' active contacts at Site: Madrid match ' +
+      '\u201c' + m.name + '\u201d on the delegation log. ' +
+      'Nothing has been decided automatically \u2014 choose the one this row refers to.';
+    $('#ct-list').innerHTML = CANDIDATES.map(function (c, i) {
+      return '<label class="cand">' +
+        '<input type="radio" name="cand" value="' + i + '">' +
+        '<span class="cand-hd">' +
+          '<span class="av" style="background:' + c.tint + '" aria-hidden="true">' + c.initials + '</span>' +
+          '<span><span class="cand-nm" style="display:block">' + c.name + '</span>' +
+          '<span class="cand-rl">' + c.role + '</span></span>' +
+        '</span>' +
+        '<dl>' +
+          '<dt>Contact ID</dt><dd class="mono">' + c.id + '</dd>' +
+          '<dt>Status</dt><dd>' + c.status + '</dd>' +
+          '<dt>Site</dt><dd>' + c.site + '</dd>' +
+          '<dt>Email</dt><dd>' + c.email + '</dd>' +
+          '<dt>Added</dt><dd>' + c.added + '</dd>' +
+          '<dt>Training</dt><dd>' + c.training + '</dd>' +
+          '<dt>On this log</dt><dd class="key">' + c.onLog + '</dd>' +
+        '</dl></label>';
+    }).join('');
+    $('#ct-go').disabled = true;
+    ctDlg.showModal();
+    $('#ct-list input').focus();
+  }
+
+  $('#ct-list').addEventListener('change', function () { $('#ct-go').disabled = false; });
+  $('#ct-x').addEventListener('click', function () { ctDlg.close(); });
+  $('#ct-cancel').addEventListener('click', function () { ctDlg.close(); });
+
+  $('#ct-go').addEventListener('click', function () {
+    var picked = $('#ct-list input:checked');
+    if (!picked) return;
+    var c = CANDIDATES[+picked.value], m = ctFor;
+
+    // Resolve the record first — every render below reads from it.
+    m.k = 'ok';
+    m.contact = c.name;
+    m.cid = c.id;
+    // The training record is readable now, so the date it carries can be shown.
+    m.done = '11 Jan 2026';
+
+    var tr = $('tr.r[data-row="' + m.id + '"]');
+    tr.cells[2].innerHTML = contactCell(m);
+    tr.cells[4].innerHTML = requiredCell(m);
+    tr.cells[5].innerHTML = statusCell(m);
+    tr.cells[6].innerHTML = progressCell(m);
+    tr.cells[7].innerHTML = actionCell(m);
+    tr.classList.remove('ambr');
+    tr.dataset.kind = 'ok';
+    $('#d-' + m.id + ' .dbox').innerHTML = detailFor(m);
+
+    renderDashlets();
+    refreshCounts();
+    applyFilters();
+    takenActions.push(c.name + ' (' + c.id + ') linked to \u201c' + m.name + '\u201d');
+    buildAudit();
+    ctDlg.close();
+    showAlert('success', c.name + ' linked to \u201c' + m.name + '\u201d');
+  });
+
+  // ── Enrol picker ────────────────────────────────────────────────────────
+  var enrolDlg = $('#enroldlg'), enrolFor = null;
+
+  /** The courses this person has to take but has no enrolment for. */
+  function pendingEnrolment(m) {
+    return m.duties.filter(function (k) { return dutyState(m, k) === 'unenrolled'; })
+      .filter(function (k, i, all) {                    // one row per course, not per task
+        return all.findIndex(function (o) { return DUTY[o].course === DUTY[k].course; }) === i;
+      });
+  }
+
+  function openEnrol(m) {
+    enrolFor = m;
+    var keys = pendingEnrolment(m);
+    $('#en-title').textContent = 'Enroll ' + m.contact;
+    $('#en-lead').textContent = keys.length === 1
+      ? 'One delegated duty needs a course this contact is not enrolled in. Confirm to enroll.'
+      : keys.length + ' delegated duties need courses this contact is not enrolled in. ' +
+        'Choose which to enroll them in.';
+    $('#en-list').innerHTML = keys.map(function (k) {
+      var d = DUTY[k];
+      return '<li><label><input type="checkbox" checked value="' + k + '">' +
+             '<span><span class="cn">' + d.course + '</span>' +
+             '<span class="dt" style="display:block">Required by: ' + d.name + '</span></span>' +
+             '</label></li>';
+    }).join('');
+    enrolDlg.showModal();
+    $('#en-list input').focus();
+  }
+
+  $('#en-x').addEventListener('click', function () { enrolDlg.close(); });
+  $('#en-cancel').addEventListener('click', function () { enrolDlg.close(); });
+
+  $('#en-go').addEventListener('click', function () {
+    var picked = $$('#en-list input:checked').map(function (i) { return i.value; });
+    if (!picked.length) { say('Select at least one course to enroll in.'); return; }
+    var m = enrolFor;
+    var names = picked.map(function (k) { return DUTY[k].course; });
+    // Enrolment is per task, so every task sharing a picked course is enrolled —
+    // one enrolment covers both duties that require it.
+    m.unenrolled = m.unenrolled.filter(function (k) {
+      return names.indexOf(DUTY[k].course) === -1;
+    });
+
+    var tr = $('tr.r[data-row="' + m.id + '"]');
+    tr.cells[4].innerHTML = requiredCell(m);
+    tr.cells[5].innerHTML = statusCell(m);
+    tr.cells[6].innerHTML = progressCell(m);
+    tr.cells[7].innerHTML = actionCell(m);
+    $('#d-' + m.id + ' .dbox').innerHTML = detailFor(m);
+    renderDashlets();
+
+    takenActions.push(m.contact + ' \u2014 enrolled in ' + names.join(', '));
+    buildAudit();
+    enrolDlg.close();
+    showAlert('success', m.contact + ' enrolled in ' + picked.length +
+              (picked.length === 1 ? ' course' : ' courses'));
+  });
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-act2]');
+    if (a) {
+      var row = TEAM.filter(function (x) { return x.id === a.dataset.row; })[0];
+      if (a.dataset.act2 === 'enroll') { openEnrol(row); return; }
+      if (a.dataset.act2 === 'select') { openContact(row); return; }
+      if (a.dataset.act2 === 'remind') { openReminder(row); return; }
+      var spec = ACT2[a.dataset.act2];
+      var who = TEAM.filter(function (x) { return x.id === a.dataset.row; })[0];
+      // The button stays the call to action it was — primary, present tense. The
+      // outcome is reported through the live region and the change log, not by
+      // turning the control into a past-tense green thing that reads as a status.
+      takenActions.push(who.contact + ' \u2014 ' + spec.msg);
+      say(spec.done + ' for ' + who.contact + '.');
+      buildAudit();
+      return;
+    }
+    var c = e.target.closest('[data-course]');
+    if (c) { say('Opening ' + c.dataset.course + ' in the training system.'); return; }
+    var p = e.target.closest('[data-contact]');
+    if (p) { say('Opening the contact record in the contacts module.'); }
+  });
+
+
+
+  // ── Audit ───────────────────────────────────────────────────────────────
+  function resultLine() {
+    var n = { ok:0, warn:0, amb:0 };
+    $$('tr.r').forEach(function (tr) { n[tr.dataset.kind] = (n[tr.dataset.kind] || 0) + 1; });
+    var parts = [n.ok + ' matched, training complete'];
+    if (n.warn) parts.push(n.warn + ' matched, training incomplete');
+    if (n.amb)  parts.push(n.amb + ' ambiguous');
+    return parts.join(' · ');
+  }
+
+  function buildAudit() {
+    var e = [
+      ['Event','Cross-module delegation check'],
+      ['Document','Delegation of Authority log · Site: Madrid · Protocol XYZ-204'],
+      ['Run at', RUN_AT],
+      ['Initiated by','S. Admin (manual run)'],
+      ['Modules read','Document · Contacts · Training'],
+      ['Names checked','9'],
+      ['Result', resultLine()],
+      ['Flagged', flagged().map(function (m) {
+        return m.contact + ' (' + m.cid + ') — ' + DUTY[m.missing[0]].course + ' incomplete';
+      }).join('<br>') || 'None']
+    ];
+    if (takenActions.length) e.push(['Action taken', takenActions.join('<br>')]);
+    e.push(['Record ID','<span class="mono">CHK-2026-0312-0942-XYZ204-MAD</span>']);
+    $('#audit').innerHTML = e.map(function (x) {
+      return '<li><span class="k">' + x[0] + '</span><span class="v">' + x[1] + '</span></li>';
+    }).join('');
+  }
+  // ── Dashlet 1 — duty → linked course, and who is assigned to it ─────────
+  // Counted per DUTY, not per course: two duties can share one course, so
+  // rolling up by course would hide which duty is actually uncovered.
+  function assignmentsFor(key) {
+    return TEAM.filter(function (m) { return m.duties.indexOf(key) > -1; });
+  }
+
+  function renderDashlet1() {
+    var rows = '', totalAssign = 0;
+    DUTY_ORDER.forEach(function (key) {
+      var d = DUTY[key], people = assignmentsFor(key);
+      if (!people.length) return;
+      var trained = people.filter(function (m) { return dutyState(m, key) === 'complete'; }).length;
+      totalAssign += people.length;
+
+      // How far the people assigned to this duty have got, on the same
+      // Graphics/Progress Bar/Small the Training Log uses. A duty with no course
+      // has nothing to measure.
+      var bar = '<span class="sub">&mdash;</span>';
+      if (d.course) {
+        var pct = Math.round((trained / people.length) * 100);
+        var band = pct === 100 ? 'p100' : pct <= 10 ? 'p10' : 'p1199';
+        bar = '<div class="pbar">' +
+          '<div class="ptrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" ' +
+            'aria-valuenow="' + pct + '" aria-label="' + trained + ' of ' + people.length +
+            ' assigned people have completed ' + d.course + '">' +
+            '<div class="pfill ' + band + '" style="width:' + pct + '%"></div></div>' +
+          '<div class="pmeta"><span class="pct">' + pct + '%</span>' +
+          '<span class="pof">' + trained + ' of ' + people.length + '</span></div></div>';
+      }
+
+      rows += '<tr>' +
+        '<td class="no">' + d.no + '</td>' +
+        '<td>' + d.name + '</td>' +
+        '<td>' + courseLink(d) + '</td>' +
+        '<td class="num"><span class="chip">' + people.length + '</span></td>' +
+        '<td class="pcol">' + bar + '</td></tr>';
+    });
+    $('#d1-rows').innerHTML = rows;
+    $('#d1-cnt').textContent = DUTY_ORDER.length + ' duties · ' + totalAssign + ' assignments';
+  }
+
+  // ── Dashlet 2 — the grid itself; each row is a person, expanding to their duties
+  function renderDashlet2() {
+    var total = TEAM.reduce(function (n, m) { return n + m.duties.length; }, 0);
+    $('#d2-cnt').textContent = TEAM.length + ' people · ' + total + ' assignments';
+  }
+
+  function renderDashlets() { renderDashlet1(); renderDashlet2(); }
+  renderDashlets();
+
+  // Each dashlet collapses from its own header, per the portlet pattern.
+  $$('.dash-hd').forEach(function (hd) {
+    hd.addEventListener('click', function () {
+      var open = hd.getAttribute('aria-expanded') === 'true';
+      hd.setAttribute('aria-expanded', String(!open));
+      $('#' + hd.getAttribute('aria-controls')).hidden = open;
+      say(hd.querySelector('h2').textContent.trim() + (open ? ' collapsed' : ' expanded'));
+    });
+  });
+
+  buildAudit();
+
+  // ── Change log dialog ───────────────────────────────────────────────────
+  var dlg = $('#changelog');
+  function openChangeLog() { buildAudit(); if (!dlg.open) dlg.showModal(); }
+  function closeChangeLog() { if (dlg.open) dlg.close(); }
+  $('#cl-x').addEventListener('click', closeChangeLog);
+  // clicking the backdrop dismisses (Esc is handled by <dialog> itself)
+  dlg.addEventListener('click', function (e) { if (e.target === dlg) closeChangeLog(); });
+  // the app's action bar drives this across the frame boundary
+  window.openChangeLog = openChangeLog;
+
+})();
+</script>
+</body>
+</html>
