@@ -885,10 +885,11 @@ function QvPanelBody() {
  * that site's profile rather than the study's matrix, which reads across every
  * site and would not be about the document on screen.
  */
-// Dev: the LMS's own dev server. Published: the combined site, where the LMS
-// is the root and this app sits one level under it.
-const LMS_URL = import.meta.env.DEV ? 'http://localhost:5176/' : new URL('../', window.location.href).pathname;
-const lmsDoaUrl = () => `${LMS_URL}?site=${encodeURIComponent(currentSite().number)}&section=doa`;
+// Go to LMS lands on the SITE profile's Delegated Tasks — this log belongs to
+// one site, and that is the screen that reads it. It is its own app and its
+// own repository: a dev server locally, a sibling Pages site once published.
+const SITE_APP = import.meta.env.DEV ? 'http://localhost:5177/' : '/lms-site-profile/';
+const lmsDoaUrl = () => `${SITE_APP}?site=${encodeURIComponent(currentSite().number)}&section=doa`;
 
 export function DocumentPreview({
   doc,
