@@ -15,7 +15,7 @@ Pushing to `main` builds and publishes it — `.github/workflows/pages.yml`. The
 `public/` asset goes through `import.meta.env.BASE_URL` so it resolves under that prefix rather
 than at the domain root.
 
-The Training Report opens at `/cross-module-check.html` on its own, without the surrounding app.
+The Training Requirements opens at `/cross-module-check.html` on its own, without the surrounding app.
 
 ## Where the values come from
 
@@ -76,7 +76,7 @@ page header, tree and grid; the top header and nav rail stay put. Back returns t
 
 ```
 DocHeader          header/bg — back · id · INDEXING · QC status · markers
-                   favorite · title (Headings/H4) · [Preview | Training Report]
+                   favorite · title (Headings/H4) · [Preview | Training Requirements]
                    · Approve / Clarify / Reject / ···
 Action toolbar     toolbar/bg — Start Page Manipulation · Open in New Window · More
 ├ Viewer           ribbon · tool strip · the PDF · "Page 1 of 1"
@@ -125,10 +125,10 @@ built: a third row carrying the file icon + submitted name in `Headings/H6/Bold`
 `favorite/icon-size-m` (30) box**, not a 30px solid glyph, and the Button Group sits directly
 after the title: gaps are `header/doc/gap-x-xs` (5) star→title and `gap-x-m` (15) title→group.
 
-**Button Group** (eTMF node `34312:227297`) — the Preview / Training Report toggle in the doc
+**Button Group** (eTMF node `34312:227297`) — the Preview / Training Requirements toggle in the doc
 header. Segments are `button/solid/tertiary`: selected `#5391c6` + white label, resting white +
 `#1f6aac` label, `Buttons/Small` with 10 × 5 paddings and a 45px min width, sharing one
-`button-group` border (`#dce1eb`, radius 5). Preview shows the PDF; **Training Report has no
+`button-group` border (`#dce1eb`, radius 5). Preview shows the PDF; **Training Requirements has no
 content wired** — it shows a neutral System Message rather than invented report data.
 
 ## Header and grid content
@@ -209,7 +209,7 @@ so you learn a report is waiting without opening the document. `src/TrainingRepo
   alike. It states when the check ran, the three counts with their semantic glyphs, what the
   check read, and the one action that follows: **Open training report**.
 - **It opens straight onto the report.** `onOpen` takes an optional `DocView`, so the badge lands
-  on the Training Report segment while clicking the file icon or the name still lands on Preview.
+  on the Training Requirements segment while clicking the file icon or the name still lands on Preview.
 
 **It is portalled to `document.body`.** The name cell clips to an ellipsis and the grid scrolls
 horizontally, so an absolutely-positioned panel was cut off by both — the first attempt rendered
@@ -222,10 +222,10 @@ row sits near the right edge.
 > the row in `documentsData.ts` duplicates them and **must be kept in step with `TEAM` in
 > `public/cross-module-check.html`** — currently 9 people, 6 / 2 / 1.
 
-## Training Report — cross-module check demo
+## Training Requirements — cross-module check demo
 
 `public/cross-module-check.html` is a **self-contained** interactive demo: one file, inline CSS
-and vanilla JS, no build step and no backend. It fills the Training Report segment via an
+and vanilla JS, no build step and no backend. It fills the Training Requirements segment via an
 `<iframe>`, and also opens standalone at `/cross-module-check.html` — so it screen-records
 without the surrounding app.
 
@@ -385,144 +385,24 @@ own border. They now carry the same 15 as everything else, so the table is held 
 rather than colliding with them. Measured: table inset 15 left and right from the dashlet edge,
 expansion rule at 15, nested table at 60 (15 + `table/row/expand-padding-left-x` 45).
 
-**An Action column carries one primary button per row that has a problem, and nothing at all for
-the rows that don't.** `actionFor()` returns the single thing that would move that person
-forward, ordered by what blocks what:
+**One action, in the cell that shows its problem.** When the contact does not resolve to a single
+record, that cell states the problem and carries the fix beneath it — **Select contact**, which
+opens the picker. Nothing else in the Training Log is actionable.
 
-| condition | action |
-|---|---|
-| the contact does not resolve to one record | **Select contact** |
-| a course must be completed and there is no enrolment for it | **Enroll** |
-| a course must be completed and there is an enrolment — In progress or Not started | **Send reminder** |
-| nothing outstanding | *(empty)* |
+It is `Button/Outline warning`: `button/outline/warning/resting-text` `#af620b` on a
+`resting-border` `#d1862e` rule, `Buttons/Small` on `button/solid/small-paddings` 10/5. The fix
+carries the same orange as the triangle above it rather than the brand blue every other control
+uses, so the flagged cell reads as one thing.
 
-The order matters and is not arbitrary: a contact mismatch makes the training record unreadable,
-so nothing else about that person can be judged until it is settled. After that the question is
-simply whether an enrolment exists to complete the course against.
+> **Contrast deviation.** `#af620b` measures 4.59:1 on white — over AA for this 12px semibold —
+> but 4.08:1 on the `#f9f0e7` hover fill, just under. Both values are the DS's own pairing and
+> the shortfall only applies while the pointer is on the button; flagged rather than substituted.
 
-The reminder condition is **any incomplete course**, not only an overdue one — a course that is
-In progress or Not started is still worth a nudge, and overdue is a separate fact the Required
-training column already reports.
-
-**They are `button/solid/secondary`** — white on a `#1f6aac` rule rather than a filled primary,
-so a row's call to action reads as available without competing with the document's own primary
-actions. Hover `#d0e5f6`, pressed `#5391c6` with white text, all from the node.
-
-That needed **enrolment as a fact separate from completion** — `unenrolled` lists the tasks whose
-course the person has no record for, a subset of `missing`, and a different problem from being
-enrolled and not finished. Before this the two were the same state and only one action could ever
-apply.
-
-It is held **per task, not as a flag on the person**. The first pass used `enrolled: false`,
-which could not represent "enrolled in this course but not that one" — enrolling in a subset left
-every course still reading Pending enrollment. Only exercising the subset path in the browser
-surfaced it.
-
-**Enrolling raises an `Alert`** (DS Base `11252:127216`) — a white panel on a 2px semantic left
-rule, floated top-right: `alert/bg` `#ffffff`, `alert/radius` 5, `alert/border-left` 2,
-`alert/paddings` 15 / 15 / 30-left, `alert/min-width` 400 and `max-width` 600, the two-layer
-`Alert` shadow, a 20px `alert/icon-size-s` glyph and `Headings/H6/Bold` in `alert/title-text`.
-The success variant takes `alert/success-border` and `alert/success-icon`, both `#25861e`.
-
-The rule and the glyph share the type's colour but the title carries the meaning, so neither is
-load-bearing alone. The region is `role="status"` / `aria-live="polite"`, which means showing the
-alert *is* the announcement — the enrol handler no longer also calls `say()` for the same event,
-which would have said it twice. One alert at a time, replacing whatever was there; dismissible,
-and the entrance animation is behind `prefers-reduced-motion`.
-
-**Checkboxes are `control/checkbox`** (DS Base `11252:112938`), applied in both the grid and the
-enrol picker: 15×15, `radius` 2, `border-width` 1, resting `#ffffff` on `#c2cad8`, selected
-`#1f6aac`, and — the part both had been missing — **hover states**: the rule goes brand `#1f6aac`
-before anything is selected, and a selected box deepens to `#164b7a`. The resting grey alone gave
-no affordance that the box was interactive. The tick is `control/checkbox/icon` `#ffffff`.
-
-**A dialog with actions closes on a footer bar**, not on buttons floated inside its content
-panel. `.dlg-foot` sits below the white `dialog/content` inset, actions right-aligned, Cancel
-(tertiary) before the primary — the pattern the Dialog page shows on every variant that has
-actions. A dialog without actions, like the change log, has no bar and its content panel keeps
-its own bottom margin.
-
-> **The footer's paddings are inferred.** They mirror `dialog/titlebar/paddings` 15/30 by
-> symmetry; the node could not be read — the Figma server only serves whichever file is open in
-> the desktop app, and it was on DS Base at the time. Worth confirming.
-
-**Send reminder opens a picker too**, built the same way: one checkbox row per outstanding
-course, de-duplicated (two tasks sharing a course are one reminder), each naming the duty that
-requires it and either its due date — in the overdue red when it has passed — or "No due date
-set". A closing line names the recipient and their contact ID, because a reminder that does not
-say who it goes to is not reviewable.
-
-**It changes nothing about the row.** A reminder does not complete training, so the action stays
-available and can be sent again; only the change log and the Alert record that it happened. That
-is the difference from Enroll, which does change state and therefore retires its own button.
-
-**Select contact opens a picker with the facts you would actually decide on.** Two cards, one per
-candidate, chosen with a radio — the card is the `<label>`, so the whole thing is the hit target,
-and the confirm button stays disabled until something is picked. Each card carries a
-`Graphics/Avatar` (`avatar/extrasmall` 30×30, `circle-radius` 100, 1px `avatar/default-border`,
-initials in `avatar/initial-text`) and then the fields that separate them: contact ID, status,
-site, email, when the record was added, training, and the decisive one — **whether the site has a
-signature on file for this study**. Role, site and training are deliberately identical on both;
-if the details did not overlap there would be nothing to decide.
-
-> **Avatar contrast.** `avatar/initial-text` `#ffffff` on `avatar/textbase-bg-orange` `#d1862e`
-> measures **2.93:1** — well under AA. The two picker avatars use brand `#1f6aac` (5.65) and
-> `bg/accent/purple/solid/saturated` `#7349aa` (6.44) instead. The header's role avatar still
-> carries the DS pairing as specified and still fails; worth raising against the library.
-
-Confirming resolves the row the way the old inline picker used to: the record is updated first,
-then the row, its expansion and both dashlets re-render, the tiles move 6/2/1 → **7/2/0**, the
-emptied tile disappears, the change log gains a line and a success Alert appears. The Select
-contact button disappears with the problem, so it cannot be linked twice.
-
-**Enroll opens a picker** — the same `Dialog` as the change log (node `35:11233`), so Esc, the
-focus trap and background inertness come from the platform. It lists one row per *course* the
-person has no enrolment for, de-duplicated (two tasks sharing a course are one decision, not
-two), each with a `control/checkbox` 15×15 / radius 2 / 1px `#c2cad8` and the duty that requires
-it. All checked by default; confirming with none selected asks rather than doing nothing
-silently.
-
-Enrolling removes those courses from `unenrolled` — every task sharing a picked course, since one
-enrolment covers both duties that require it — then re-renders the row, its expansion and both
-dashlets. Verified end to end: two pending → enrol in one → that course reads **Not completed**
-while the other stays **Pending enrollment** and the button stays **Enroll** → reopening offers
-only the remaining course → enrolling in it flips the action to **Send reminder**.
-
-**The Course status column says so.** An outstanding course splits into two states rather than
-one: **Pending enrollment** (`status/solid/yellow` `#f7e8ba`, 14.93:1) when there is no record to
-complete against, and **Not completed** (`status/solid/orange`) when there is. The invariant —
-*a row showing Enroll has at least one course reading Pending enrollment* — is checked across all
-nine rows and holds; without it the button was asking for something the detail never showed.
-
-The inline **Select** button in the contact cell was removed when the column arrived: two buttons
-on one row read as two different fixes. Instead **the whole problem line is the control** — a
-button carrying a 20px `icons/solid/m` warning triangle and the problem text in `Body/Regular`,
-with the same hover underline the resolved contact's link uses. It opens the same candidate
-picker the Action column does, via the same `data-fix` path, so there is one behaviour behind
-two entry points rather than two buttons competing.
-
-Both contact cells sit on `vertical-align: middle`, because the name beside them runs to two
-lines and everything in the row should centre on it.
-
-**The buttons are `Button/Solid`** (DS Base `8244:45118`), not a local approximation:
-`medium-paddings` 15/5, `radius` 5, `border-width` 1, `solid-outline-medium-minwidth` 75,
-`gap` 5, `Buttons/Medium (Default)` 14/20/600, `Focus-outer` (1px white then 3px brand) instead
-of the page outline. Primary is `#1f6aac` → hover `#164b7a` → pressed `#113a5f`, all read from
-the node rather than the `#1a5a94` hover that had been derived. The plain `.btn` maps to
-`button/solid/tertiary`.
-
-**The action button stays a call to action.** Clicking Enroll or Send reminder does not relabel
-or recolour it — it stays primary and present tense. The outcome is reported through the live
-region and the change log instead. It had briefly become a past-tense `button/solid/success`
-pill, which is still just a status wearing a button's shape.
-
-The callout's Assign / Query pair is the exception, and deliberately: those two are mutually
-exclusive, so the one you chose goes `button/solid/success` and the one you did not dims to
-`button/disabled-opacity` 40. The success button there is `aria-disabled`, not `disabled` —
-applying opacity 40 to it would take white-on-`#25861e` from **4.66:1 to about 1.7:1**, and a
-finished action is done, not unavailable.
-
-
+> **Enroll and Send reminder used to live here** and were removed along with their two dialogs,
+> `actionFor`, the shared checkbox-list styles and the `ACT2` entries behind them — that flow
+> moves elsewhere. The data they acted on stays: `unenrolled` still drives the **Pending
+> enrollment** course status in the expansion, so the finding is still reported even though the
+> Training Log no longer offers the fix.
 
 **Required training carries the overdue marker.** The cell reads the course count as plain text
 (`Body/Regular` in `text/secondary`) beside a red pill when something is past due — `5 Courses`,
@@ -631,7 +511,7 @@ not, and stand in rather than being used:
   being repeated on screen.
 - **Real confirmations.** "Assign training" / "Query the site" disable both, flip the clicked one
   to a success state, print a specific message, and add an "Action taken" audit line.
-- **Re-run lives in the app's action toolbar**, not inside the report. While the Training Report
+- **Re-run lives in the app's action toolbar**, not inside the report. While the Training Requirements
   is showing, the toolbar carries that single action; the PDF actions (Start Page Manipulation,
   Open in New Window, More) are hidden. It reloads the report iframe, so the check genuinely
   recomputes — expanded rows collapse, counts return to 7/1/0, and any action taken is cleared.
@@ -694,7 +574,7 @@ were snapped to the nearest real style. The audit now reports zero problems.
 are invented sample data. Product framing is deliberately generic (document module / contacts
 module / training module) — no real company or product names.
 
-**Preview chrome.** While the Training Report is showing, the QV rail, QV panel, editor ribbon,
+**Preview chrome.** While the Training Requirements is showing, the QV rail, QV panel, editor ribbon,
 viewer tool strip and page footer are hidden, and the action toolbar swaps to the report's single action —
 these are all document-preview affordances, and the report is a full-width read.
 

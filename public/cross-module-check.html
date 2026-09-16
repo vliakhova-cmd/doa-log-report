@@ -319,26 +319,6 @@
   /* Enrol picker — control/checkbox/* (15x15, radius 2, 1px #c2cad8 on #fff)
      inside a Table/Cell-sized row, so choosing courses reads like the tables it
      was opened from rather than like a form. */
-  .enrol{list-style:none;margin:0;padding:0}
-  .enrol li{border-bottom:1px solid var(--tbl-border)}
-  .enrol li:last-child{border-bottom:none}
-  .enrol label{display:flex;align-items:flex-start;gap:10px;padding:10px 0;cursor:pointer}
-  .enrol input{appearance:none;flex:0 0 15px;width:15px;height:15px;margin:2px 0 0;
-               border:1px solid var(--cb-border);border-radius:2px;background:var(--white);
-               cursor:pointer;position:relative}
-  /* The rule goes brand on hover before anything is selected — the affordance
-     the resting grey alone does not give. */
-  .enrol input:hover{border-color:var(--brand)}                    /* hover-border */
-  .enrol input:checked{background:var(--brand);border-color:var(--brand)}
-  .enrol input:checked:hover{background:#164b7a;border-color:#164b7a}  /* selected-hover */
-  .enrol input:checked::after{content:'';position:absolute;left:4px;top:1px;
-                              width:4px;height:8px;
-                              border:solid var(--white);border-width:0 2px 2px 0;
-                              transform:rotate(45deg)}              /* control/checkbox/icon */
-  .enrol input:focus-visible{outline:none;box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
-  .enrol .cn{font-size:14px;line-height:20px;color:var(--tbl-main)}      /* Body/Regular */
-  .enrol .dt{font-size:12px;line-height:15px;color:var(--text-2)}        /* Caption/Regular */
-  .dlg-note{margin:15px 0 0;font-size:12px;line-height:15px;color:var(--text-2)}  /* Caption/Regular */
   .dlg-lead{margin:0 0 10px;font-size:14px;line-height:20px;color:var(--tbl-main)}
 
   /* ── Dashlet — DS - Advanced | IN PROGRESS | 2.0, node 34:26815 ────────── */
@@ -447,7 +427,6 @@
   /* Required training — the course count beside an overdue marker. Not a Status:
      it counts an exception rather than reporting a state, which is why it keeps
      the warning glyph the Status components gave up. */
-  .actcol{width:1%;white-space:nowrap;padding-right:15px}
   .pcol{width:200px;padding-left:15px}   /* room for the bar plus its label row */
   .req{display:inline-flex;align-items:center;gap:10px}          /* sizes/gap/s */
   .req .n{color:var(--text-2);font-size:14px;line-height:20px}   /* Body/Regular · text/secondary */
@@ -492,27 +471,25 @@
   .clink:focus-visible{outline:none;background:var(--card-bg);
                        box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
 
-  /* No link to give yet, but the row is still actionable: the cell is a button
-     onto the same candidate picker the Action column opens, so the problem text
-     itself is the way in. Body/Regular in table/cell/value/main-text with the
-     hover underline the resolved contact's link uses. */
-  .cissue{display:inline-flex;align-items:center;vertical-align:middle;
-          gap:5px;                                             /* table/cell/value/gap */
-          padding:0;border:none;background:none;cursor:pointer;text-align:left;
-          border-radius:var(--r);
-          color:var(--tbl-main);
-          font-family:inherit;font-size:14px;line-height:20px;font-weight:400}
-  .cissue svg{flex:0 0 20px}                                   /* icons/solid/m */
-  .cissue .txt{border-bottom:1px solid transparent}
-  .cissue:hover .txt, .cissue:active .txt{border-bottom-color:currentColor}
-  .cissue:focus-visible{outline:none;background:var(--card-bg);
-                        box-shadow:0 0 0 1px #fff, 0 0 0 3px var(--brand)}
+  /* No link to give yet, so the cell states the problem and puts the one action
+     that fixes it directly beneath — the cell that shows a problem is where the
+     fix belongs, rather than a separate column. */
+  .cissue{display:inline-flex;flex-direction:column;align-items:flex-start;gap:5px;
+          vertical-align:middle}
+  .cissue .txt{display:inline-flex;align-items:center;gap:5px;   /* table/cell/value/gap */
+               color:var(--tbl-additional);
+               font-size:12px;line-height:15px}                  /* Caption/Regular */
+  .cissue .txt svg{flex:0 0 20px}                                /* icons/solid/m */
+
+  /* Button/Outline warning — the fix for a flagged cell carries the same orange
+     as the triangle above it, rather than the brand blue every other control
+     uses. button/outline/warning/resting-{text,border}. */
   .btn-xs{display:inline-flex;align-items:center;justify-content:center;gap:5px;
           min-width:45px;padding:5px 10px;                    /* button/solid/small-paddings */
-          border:1px solid var(--chip-border);border-radius:var(--r);
-          background:transparent;color:var(--brand);cursor:pointer;
+          border:1px solid var(--warn-line);border-radius:var(--r);
+          background:transparent;color:var(--warn);cursor:pointer;
           font-size:12px;line-height:15px;font-weight:600}    /* Buttons/Small */
-  .btn-xs:hover{background:var(--brand-4)}
+  .btn-xs:hover{background:#f9f0e7}                            /* bg/accent/orange/subtlest */
 
 
   /* ── audit ──────────────────────────────────────────────── */
@@ -576,11 +553,10 @@
             <th scope="col" class="ctr">Required training</th>
             <th scope="col">Training status</th>
             <th scope="col">Training progress</th>
-            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
-        <tbody id="empty" hidden><tr><td colspan="8" class="empty">No rows match this filter.</td></tr></tbody>
+        <tbody id="empty" hidden><tr><td colspan="7" class="empty">No rows match this filter.</td></tr></tbody>
       </table>
       </div>
     </div>
@@ -612,43 +588,6 @@
        Native <dialog> so Esc, the focus trap and inertness come from the platform. -->
   <!-- Alerts float over the report; role=status announces without stealing focus. -->
   <div class="alerts" id="alerts" role="status" aria-live="polite"></div>
-
-  <!-- Enrol picker — the same Dialog as the change log (node 35:11233). -->
-  <dialog id="enroldlg" aria-labelledby="en-title">
-    <div class="dlg-bar">
-      <h2 id="en-title">Enroll</h2>
-      <button class="dlg-x" type="button" id="en-x" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-    <div class="dlg-content">
-      <p class="dlg-lead" id="en-lead"></p>
-      <ul class="enrol" id="en-list"></ul>
-    </div>
-    <div class="dlg-foot">
-      <button class="btn" type="button" id="en-cancel">Cancel</button>
-      <button class="btn btn-primary" type="button" id="en-go">Enroll</button>
-    </div>
-  </dialog>
-
-  <!-- Reminder picker — the same Dialog again (node 35:11233). -->
-  <dialog id="remdlg" aria-labelledby="rm-title">
-    <div class="dlg-bar">
-      <h2 id="rm-title">Send reminder</h2>
-      <button class="dlg-x" type="button" id="rm-x" aria-label="Close">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.4 4.4l7.2 7.2M11.6 4.4l-7.2 7.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      </button>
-    </div>
-    <div class="dlg-content">
-      <p class="dlg-lead" id="rm-lead"></p>
-      <ul class="enrol" id="rm-list"></ul>
-      <p class="dlg-note" id="rm-to"></p>
-    </div>
-    <div class="dlg-foot">
-      <button class="btn" type="button" id="rm-cancel">Cancel</button>
-      <button class="btn btn-primary" type="button" id="rm-go">Send reminder</button>
-    </div>
-  </dialog>
 
   <!-- Contact picker — the same Dialog again (node 35:11233). -->
   <dialog id="contactdlg" aria-labelledby="ct-title">
@@ -721,7 +660,7 @@
   }
 
 
-  // ── Scenario — Site: Madrid, 9 delegated team members ───────────────────
+  // ── Scenario — Site: 0982 - Miles, H, 9 delegated team members ───────────────────
   // A delegated duty is qualified by at most one LMS course. Two duties can
   // share a course (sample processing and vital signs both need Sample
   // Handling), which is why coverage has to be counted per duty, not per course.
@@ -756,7 +695,7 @@
   //    amb = not resolved to a contact, so training cannot be checked at all
   // missing: duty keys whose course this person has not completed
   var TEAM = [
-    { id:'r1', k:'ok',   name:'Dr. Marta Solís', role:'Principal Investigator', contact:'Marta Solís', cid:'CT-40021',
+    { id:'r1', k:'ok',   name:'Dr. Helena Miles', role:'Principal Investigator', contact:'Helena Miles', cid:'CT-40021',
       duties:['oversight','eligibility','consent','source','ae','ecrf'], missing:[], done:'26 Sep 2025' },
     { id:'r2', k:'warn', name:'Dr. Elena Ruiz',  role:'Sub-Investigator',       contact:'Elena Ruiz',  cid:'CT-40114',
       duties:['eligibility','consent','source','ae'], missing:['eligibility','ae'], unenrolled:['eligibility','ae'] },
@@ -783,13 +722,13 @@
    */
   var CANDIDATES = [
     { id:'CT-40218', name:'Ana Delgado', initials:'AD', tint:'#1f6aac',
-      role:'Research Nurse', status:'Active', site:'Madrid (Site 001)',
-      email:'a.delgado@madrid-site.example', added:'14 Jan 2026',
+      role:'Research Nurse', status:'Active', site:'0982 - Miles, H',
+      email:'a.delgado@site0982.example', added:'14 Jan 2026',
       training:'Sample Handling & Processing \u2014 complete',
       onLog:'Signature on file, matches the delegation log' },
     { id:'CT-40873', name:'Andrea Delgado', initials:'AD', tint:'#7349aa',
-      role:'Research Nurse', status:'Active', site:'Madrid (Site 001)',
-      email:'andrea.delgado@madrid-site.example', added:'02 Mar 2026',
+      role:'Research Nurse', status:'Active', site:'0982 - Miles, H',
+      email:'andrea.delgado@site0982.example', added:'02 Mar 2026',
       training:'Sample Handling & Processing \u2014 complete',
       onLog:'No signature on file for this study' }
   ];
@@ -962,32 +901,6 @@
    * and how many of those are past their due date. The count is plain text; the
    * overdue marker only appears when there is one to report.
    */
-  /**
-   * The one thing that would move this person forward, or nothing at all.
-   * Ordered by what blocks what: an unresolved contact makes the training
-   * unreadable, a missing enrolment makes a reminder pointless, and a reminder
-   * is only worth sending once the record exists and has gone past due.
-   */
-  function actionFor(m) {
-    // A contact mismatch makes the training record unreadable, so nothing else
-    // can be judged until it is settled.
-    if (m.k === 'amb') return { act:'select', label:'Select contact' };
-    if (!m.missing.length) return null;
-    // Something must be completed. Either there is no enrolment to complete it
-    // against, or there is one and it has not been finished yet.
-    return (m.unenrolled || []).length
-      ? { act:'enroll', label:'Enroll' }
-      : { act:'remind', label:'Send reminder' };
-  }
-
-  function actionCell(m) {
-    var a = actionFor(m);
-    if (!a) return '';
-    var attr = 'data-act2="' + a.act + '"';
-    return '<button class="btn btn-secondary" type="button" ' + attr +
-           ' data-row="' + m.id + '">' + a.label + '</button>';
-  }
-
   function requiredCell(m) {
     if (m.k === 'amb') return '<span class="sub">Pending contact selection</span>';
     var n = courseCount(m);
@@ -1002,8 +915,8 @@
   /**
    * Resolved contact cell. A resolved person is a Button/Link to their contact
    * record — no ID, the name is the handle. An unresolved one states the problem
-   * and offers the single action that fixes it: Select when several contacts
-   * match, Create when none does.
+   * and carries the action that fixes it, in the cell that shows it rather than
+   * in a column of its own.
    */
   function contactCell(m) {
     if (m.contact) {
@@ -1011,10 +924,12 @@
              '<span class="lb">' + m.contact + '</span></button>';
     }
     var fix = m.k === 'amb'
-      ? { key:'select', text:'2 possible matches', hint:'Choose the correct contact' }
-      : { key:'create', text:'No contact found',   hint:'Create a contact record' };
-    return '<button class="cissue" type="button" data-act2="select" data-row="' + m.id +
-           '" title="' + fix.hint + '">' + I.warnM + '<span class="txt">' + fix.text + '</span></button>';
+      ? { act:'select', text:'2 possible matches', label:'Select contact' }
+      : { act:'create', text:'No contact found',   label:'Create contact' };
+    return '<div class="cissue"><span class="txt">' + I.warnM +
+           '<span>' + fix.text + '</span></span>' +
+           '<button class="btn-xs" type="button" data-act2="' + fix.act +
+           '" data-row="' + m.id + '">' + fix.label + '</button></div>';
   }
 
   // ── Rows ────────────────────────────────────────────────────────────────
@@ -1036,14 +951,13 @@
       '<td class="cellwrap ctr">' + duty + '</td>' +
       '<td class="cellwrap ctr">' + training + '</td>' +
       '<td class="cellwrap">' + statusCell(m) + '</td>' +
-      '<td class="cellwrap">' + progressCell(m) + '</td>' +
-      '<td class="actcol">' + actionCell(m) + '</td>';
+      '<td class="cellwrap">' + progressCell(m) + '</td>';
     tb.appendChild(tr);
 
     var dr = document.createElement('tr');
     dr.className = 'detail'; dr.id = 'd-' + m.id; dr.hidden = true;
     dr.dataset.detailFor = m.id;
-    dr.innerHTML = '<td colspan="8"><div class="dbox">' + detailFor(m) + '</div></td>';
+    dr.innerHTML = '<td colspan="7"><div class="dbox">' + detailFor(m) + '</div></td>';
     tb.appendChild(dr);
 
     $('.disc', tr).addEventListener('click', function () { toggle(m.id); });
@@ -1131,9 +1045,8 @@
   // Neither target exists in a self-contained demo, so the links report the
   // navigation instead of faking a destination.
   var ACT2 = {
-    enroll: { done:'Enrolled', msg:'enrolled in the outstanding course' },
-    remind: { done:'Reminder sent', msg:'sent a reminder for the outstanding course' },
-    select: { done:'Contact selection opened', msg:'opened contact selection' }
+    select: { done:'Contact selection opened', msg:'opened contact selection' },
+    create: { done:'Contact creation opened', msg:'opened contact creation' }
   };
   /**
    * Alert — one at a time, replacing whatever was there. It sits inside the
@@ -1153,56 +1066,22 @@
     if (e.target.closest('.alert-x')) $('#alerts').innerHTML = '';
   });
 
-  // ── Reminder picker ─────────────────────────────────────────────────────
-  var remDlg = $('#remdlg'), remFor = null;
-
-  /** The courses this person is enrolled in but has not finished, once each. */
-  function outstandingEnrolled(m) {
-    return m.duties.filter(function (k) { return dutyState(m, k) === 'incomplete'; })
-      .filter(function (k, i, all) {
-        return all.findIndex(function (o) { return DUTY[o].course === DUTY[k].course; }) === i;
-      });
-  }
-
-  function openReminder(m) {
-    remFor = m;
-    var keys = outstandingEnrolled(m);
-    var od = daysOverdue(m);
-    $('#rm-title').textContent = 'Send reminder to ' + m.contact;
-    $('#rm-lead').textContent = keys.length === 1
-      ? 'One course is enrolled but not completed. Confirm to send a reminder.'
-      : keys.length + ' courses are enrolled but not completed. Choose which to remind about.';
-    $('#rm-list').innerHTML = keys.map(function (k) {
-      var d = DUTY[k];
-      var when = m.due
-        ? (od ? '<span class="overdue">Due ' + m.due + ' &middot; overdue by ' + od + ' days</span>'
-              : 'Due ' + m.due)
-        : 'No due date set';
-      return '<li><label><input type="checkbox" checked value="' + k + '">' +
-             '<span><span class="cn">' + d.course + '</span>' +
-             '<span class="dt" style="display:block">Required by: ' + d.name + ' &middot; ' + when + '</span>' +
-             '</span></label></li>';
-    }).join('');
-    $('#rm-to').textContent = 'The reminder goes to ' + m.contact + ' (' + m.cid + ').';
-    remDlg.showModal();
-    $('#rm-list input').focus();
-  }
-
-  $('#rm-x').addEventListener('click', function () { remDlg.close(); });
-  $('#rm-cancel').addEventListener('click', function () { remDlg.close(); });
-
-  $('#rm-go').addEventListener('click', function () {
-    var picked = $$('#rm-list input:checked').map(function (i) { return i.value; });
-    if (!picked.length) { say('Select at least one course to remind about.'); return; }
-    var m = remFor;
-    var names = picked.map(function (k) { return DUTY[k].course; });
-    // A reminder does not complete anything, so nothing about the row changes —
-    // the action stays available, because it can be sent again.
-    takenActions.push(m.contact + ' \u2014 reminded about ' + names.join(', '));
-    buildAudit();
-    remDlg.close();
-    showAlert('success', 'Reminder sent to ' + m.contact + ' for ' + picked.length +
-              (picked.length === 1 ? ' course' : ' courses'));
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-act2]');
+    if (a) {
+      var row = TEAM.filter(function (x) { return x.id === a.dataset.row; })[0];
+      // The only action with somewhere to go opens its picker; the rest report.
+      if (a.dataset.act2 === 'select') { openContact(row); return; }
+      var spec = ACT2[a.dataset.act2];
+      takenActions.push(row.contact + ' \u2014 ' + spec.msg);
+      say(spec.done + '.');
+      buildAudit();
+      return;
+    }
+    var c = e.target.closest('[data-course]');
+    if (c) { say('Opening ' + c.dataset.course + ' in the training system.'); return; }
+    var p = e.target.closest('[data-contact]');
+    if (p) { say('Opening the contact record in the contacts module.'); }
   });
 
   // ── Contact picker ──────────────────────────────────────────────────────
@@ -1210,7 +1089,7 @@
 
   function openContact(m) {
     ctFor = m;
-    $('#ct-lead').textContent = CANDIDATES.length + ' active contacts at Site: Madrid match ' +
+    $('#ct-lead').textContent = CANDIDATES.length + ' active contacts at Site: 0982 - Miles, H match ' +
       '\u201c' + m.name + '\u201d on the delegation log. ' +
       'Nothing has been decided automatically \u2014 choose the one this row refers to.';
     $('#ct-list').innerHTML = CANDIDATES.map(function (c, i) {
@@ -1257,7 +1136,6 @@
     tr.cells[4].innerHTML = requiredCell(m);
     tr.cells[5].innerHTML = statusCell(m);
     tr.cells[6].innerHTML = progressCell(m);
-    tr.cells[7].innerHTML = actionCell(m);
     tr.classList.remove('ambr');
     tr.dataset.kind = 'ok';
     $('#d-' + m.id + ' .dbox').innerHTML = detailFor(m);
@@ -1270,90 +1148,6 @@
     ctDlg.close();
     showAlert('success', c.name + ' linked to \u201c' + m.name + '\u201d');
   });
-
-  // ── Enrol picker ────────────────────────────────────────────────────────
-  var enrolDlg = $('#enroldlg'), enrolFor = null;
-
-  /** The courses this person has to take but has no enrolment for. */
-  function pendingEnrolment(m) {
-    return m.duties.filter(function (k) { return dutyState(m, k) === 'unenrolled'; })
-      .filter(function (k, i, all) {                    // one row per course, not per task
-        return all.findIndex(function (o) { return DUTY[o].course === DUTY[k].course; }) === i;
-      });
-  }
-
-  function openEnrol(m) {
-    enrolFor = m;
-    var keys = pendingEnrolment(m);
-    $('#en-title').textContent = 'Enroll ' + m.contact;
-    $('#en-lead').textContent = keys.length === 1
-      ? 'One delegated duty needs a course this contact is not enrolled in. Confirm to enroll.'
-      : keys.length + ' delegated duties need courses this contact is not enrolled in. ' +
-        'Choose which to enroll them in.';
-    $('#en-list').innerHTML = keys.map(function (k) {
-      var d = DUTY[k];
-      return '<li><label><input type="checkbox" checked value="' + k + '">' +
-             '<span><span class="cn">' + d.course + '</span>' +
-             '<span class="dt" style="display:block">Required by: ' + d.name + '</span></span>' +
-             '</label></li>';
-    }).join('');
-    enrolDlg.showModal();
-    $('#en-list input').focus();
-  }
-
-  $('#en-x').addEventListener('click', function () { enrolDlg.close(); });
-  $('#en-cancel').addEventListener('click', function () { enrolDlg.close(); });
-
-  $('#en-go').addEventListener('click', function () {
-    var picked = $$('#en-list input:checked').map(function (i) { return i.value; });
-    if (!picked.length) { say('Select at least one course to enroll in.'); return; }
-    var m = enrolFor;
-    var names = picked.map(function (k) { return DUTY[k].course; });
-    // Enrolment is per task, so every task sharing a picked course is enrolled —
-    // one enrolment covers both duties that require it.
-    m.unenrolled = m.unenrolled.filter(function (k) {
-      return names.indexOf(DUTY[k].course) === -1;
-    });
-
-    var tr = $('tr.r[data-row="' + m.id + '"]');
-    tr.cells[4].innerHTML = requiredCell(m);
-    tr.cells[5].innerHTML = statusCell(m);
-    tr.cells[6].innerHTML = progressCell(m);
-    tr.cells[7].innerHTML = actionCell(m);
-    $('#d-' + m.id + ' .dbox').innerHTML = detailFor(m);
-    renderDashlets();
-
-    takenActions.push(m.contact + ' \u2014 enrolled in ' + names.join(', '));
-    buildAudit();
-    enrolDlg.close();
-    showAlert('success', m.contact + ' enrolled in ' + picked.length +
-              (picked.length === 1 ? ' course' : ' courses'));
-  });
-
-  document.addEventListener('click', function (e) {
-    var a = e.target.closest('[data-act2]');
-    if (a) {
-      var row = TEAM.filter(function (x) { return x.id === a.dataset.row; })[0];
-      if (a.dataset.act2 === 'enroll') { openEnrol(row); return; }
-      if (a.dataset.act2 === 'select') { openContact(row); return; }
-      if (a.dataset.act2 === 'remind') { openReminder(row); return; }
-      var spec = ACT2[a.dataset.act2];
-      var who = TEAM.filter(function (x) { return x.id === a.dataset.row; })[0];
-      // The button stays the call to action it was — primary, present tense. The
-      // outcome is reported through the live region and the change log, not by
-      // turning the control into a past-tense green thing that reads as a status.
-      takenActions.push(who.contact + ' \u2014 ' + spec.msg);
-      say(spec.done + ' for ' + who.contact + '.');
-      buildAudit();
-      return;
-    }
-    var c = e.target.closest('[data-course]');
-    if (c) { say('Opening ' + c.dataset.course + ' in the training system.'); return; }
-    var p = e.target.closest('[data-contact]');
-    if (p) { say('Opening the contact record in the contacts module.'); }
-  });
-
-
 
   // ── Audit ───────────────────────────────────────────────────────────────
   function resultLine() {
@@ -1368,7 +1162,7 @@
   function buildAudit() {
     var e = [
       ['Event','Cross-module delegation check'],
-      ['Document','Delegation of Authority log · Site: Madrid · Protocol XYZ-204'],
+      ['Document','0982 - Miles, H — Delegation of Authority Log v4.0 · Study: Bivivid'],
       ['Run at', RUN_AT],
       ['Initiated by','S. Admin (manual run)'],
       ['Modules read','Document · Contacts · Training'],
@@ -1455,6 +1249,11 @@
   // clicking the backdrop dismisses (Esc is handled by <dialog> itself)
   dlg.addEventListener('click', function (e) { if (e.target === dlg) closeChangeLog(); });
   // the app's action bar drives this across the frame boundary
+  // Reached from the app's action bar, the same way openChangeLog is.
+  window.sayLms = function () {
+    showAlert('success', 'Opening the training system');
+  };
+
   window.openChangeLog = openChangeLog;
 
 })();

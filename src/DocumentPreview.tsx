@@ -15,6 +15,7 @@ import {
   faCheck,
   faCopy,
   faRotateRight,
+  faGraduationCap,
   faRectangleList,
   faCircleInfo,
   faMagnifyingGlass,
@@ -46,6 +47,7 @@ import {
   icon,
 } from './tokens';
 import { DocumentRow } from './documentsData';
+import { currentSite } from './siteContext';
 
 // Document preview — eTMF | IN PROGRESS | 10.9.1-10.9.2, node 32984:13253.
 // Occupies the area right of the main nav rail, replacing the page header,
@@ -204,7 +206,7 @@ export type DocView = 'preview' | 'training';
 
 const DOC_VIEWS: { id: DocView; label: string }[] = [
   { id: 'preview', label: 'Preview' },
-  { id: 'training', label: 'Training Report' },
+  { id: 'training', label: 'Training Requirements' },
 ];
 
 function DocHeader({
@@ -418,16 +420,16 @@ function Viewer({ view, reportRef }: { view: DocView; reportRef: React.RefObject
         </div>
         )}
 
-        {/* Page area — the real PDF, or the Training Report segment */}
+        {/* Page area — the real PDF, or the Training Requirements segment */}
         <div style={{ flex: '1 0 0', minWidth: 0, backgroundColor: view === 'preview' ? '#e8e8e8' : color.pageBg, overflow: 'hidden' }}>
           {view === 'preview' ? (
             <iframe
               src={`${PDF_SRC}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-              title="Delegation of Authority log"
+              title={`${currentSite().label} — Delegation of Authority Log v4.0`}
               style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
             />
           ) : (
-            // Training Report — the standalone cross-module check demo. It lives at
+            // Training Requirements — the standalone cross-module check demo. It lives at
             // public/cross-module-check.html so it also runs on its own in a browser
             // and screen-records cleanly, independent of this app.
             <iframe
@@ -477,6 +479,80 @@ const QV_ITEMS: QvItem[] = [
   { id: 'history', glyph: faFileLines, label: 'Doc History' },
 ];
 
+/**
+ * qv-panel/navigation/item — DS - Advanced | IN PROGRESS | 2.0, node 926:14565.
+ *
+ * The five states the component ships, and the three things this got wrong:
+ *   · ORDER. The item is Icon Wrapped, then "Text + Counter" — so the counter
+ *     sits BETWEEN the icon and the label, not above the icon.
+ *   · ICON SIZE. qv-panel/navigation/item's icon is a 30px CONTAINER holding an
+ *     Icons/solid/m (20) glyph — the glyph is not itself 30.
+ *   · STATES. resting → transparent; hover → hover-bg with the resting icon and
+ *     text tones unchanged; selected → selected-bg with white icon, label and
+ *     counter; focus → the hover (or selected) fill plus the elevation/focus
+ *     inner ring. Hover and focus were missing entirely.
+ *
+ * The item is a fixed 75 wide with a 75 min-height, gap 0, padding-xy 5.
+ */
+function QvNavItem({ item, selected, onSelect }: { item: QvItem; selected: boolean; onSelect: () => void }) {
+  const [hover, setHover] = useState(false);
+  const [focus, setFocus] = useState(false);
+
+  const bg = selected ? color.qvNavSelectedBg : hover || focus ? color.qvNavHoverBg : 'transparent';
+  const fg = selected ? color.qvNavSelectedText : color.qvNavRestingText;
+  const iconColor = selected ? color.qvNavSelectedText : color.qvNavRestingIcon;
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-current={selected ? 'true' : undefined}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setFocus(true)}
+      onBlur={() => setFocus(false)}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: qv.navItemGap,
+        width: qv.navItemWidth,
+        minHeight: qv.navItemMinHeight,
+        padding: qv.navItemPaddingXY,
+        border: 'none',
+        backgroundColor: bg,
+        color: fg,
+        // The ring is an inner shadow, so it never changes the item's box.
+        boxShadow: focus ? qv.focusShadow : 'none',
+        outline: 'none',
+        cursor: 'pointer',
+        transition: 'background-color 100ms',
+      }}
+    >
+      {/* Icon Wrapped — a 30px box, glyph 20 */}
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: qv.navItemIconSize,
+          height: qv.navItemIconSize,
+          flexShrink: 0,
+        }}
+      >
+        <FontAwesomeIcon icon={item.glyph} style={{ width: qv.navItemGlyph, height: qv.navItemGlyph, color: iconColor }} />
+      </span>
+
+      {/* Text + Counter — counter above the label, both centred, both full width */}
+      {item.count != null && <span style={{ ...type.counter, color: fg, width: '100%', textAlign: 'center' }}>{item.count}</span>}
+      <span style={{ ...type.captionRegular, color: fg, width: '100%', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {item.label}
+      </span>
+    </button>
+  );
+}
+
 function QvNav({ active, onSelect }: { active: string; onSelect: (id: string) => void }) {
   return (
     <div
@@ -489,44 +565,9 @@ function QvNav({ active, onSelect }: { active: string; onSelect: (id: string) =>
         borderLeft: `1px solid ${color.borderSubtle}`,
       }}
     >
-      {QV_ITEMS.map(item => {
-        const on = active === item.id;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onSelect(item.id)}
-            aria-current={on ? 'true' : undefined}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: qv.navItemGap,
-              minHeight: qv.navItemMinHeight,
-              padding: qv.navItemPaddingXY,
-              border: 'none',
-              backgroundColor: on ? color.qvNavSelectedBg : 'transparent',
-              color: on ? color.qvNavSelectedText : color.qvNavRestingText,
-              cursor: 'pointer',
-              transition: 'background-color 100ms',
-            }}
-          >
-            {item.count != null && (
-              <span style={{ ...type.counter, color: on ? color.qvNavSelectedText : color.qvNavRestingText }}>{item.count}</span>
-            )}
-            <FontAwesomeIcon
-              icon={item.glyph}
-              style={{
-                width: qv.navItemIconSize,
-                height: qv.navItemIconSize,
-                color: on ? color.qvNavSelectedText : color.qvNavRestingIcon,
-              }}
-            />
-            <span style={{ ...type.captionRegular, textAlign: 'center' }}>{item.label}</span>
-          </button>
-        );
-      })}
+      {QV_ITEMS.map(item => (
+        <QvNavItem key={item.id} item={item} selected={active === item.id} onSelect={() => onSelect(item.id)} />
+      ))}
     </div>
   );
 }
@@ -538,11 +579,13 @@ const PANEL_TABS = [
   { id: 'crossdoc', label: 'Cross-Doc Check', dot: true },
 ];
 
+// The document is one site's, so its extracted metadata names that site and
+// its investigator — the same site the tree files it under and the LMS linked to.
 const MAPPED_FIELDS = [
   { label: 'Document Type', value: 'Delegation of Authority' },
   { label: 'Document Date', value: '25 Apr 2025' },
-  { label: 'PI', value: 'Adam Driver' },
-  { label: 'Investigative Site', value: '577264 Pharmacy Technician Certification Board' },
+  { label: 'PI', value: currentSite().pi },
+  { label: 'Investigative Site', value: currentSite().label },
 ];
 
 const EXTRACTED_FIELDS = [
@@ -836,6 +879,14 @@ function QvPanelBody() {
 }
 
 // ─── Preview ─────────────────────────────────────────────────────────────────
+/**
+ * The LMS prototype's Delegated Tasks for THIS SITE — the other half of this
+ * cross-module check. The log being previewed is one site's, so the link opens
+ * that site's profile rather than the study's matrix, which reads across every
+ * site and would not be about the document on screen.
+ */
+const lmsDoaUrl = () => `http://localhost:5176/?site=${encodeURIComponent(currentSite().number)}&section=doa`;
+
 export function DocumentPreview({
   doc,
   onBack,
@@ -854,6 +905,18 @@ export function DocumentPreview({
   // Re-running the check reloads the report, which recomputes it from scratch —
   // rows collapse, counts reset, any action taken is cleared.
   // The change log lives with its data, inside the report document.
+  // The LMS side of this story is the lms-study-profile prototype, whose DOA
+  // section holds the duty → course matrix this check reads. It runs as its own
+  // app on the port its entry in .claude/launch.json reserves, so the link only
+  // resolves while that dev server is up; the live-region announcement stays as
+  // the fallback for when it is not.
+  function openLms() {
+    const opened = window.open(lmsDoaUrl(), '_blank', 'noreferrer');
+    if (opened) return;
+    const w = reportRef.current?.contentWindow as (Window & { sayLms?: () => void }) | null;
+    w?.sayLms?.();
+  }
+
   function openChangeLog() {
     const w = reportRef.current?.contentWindow as (Window & { openChangeLog?: () => void }) | null;
     w?.openChangeLog?.();
@@ -897,13 +960,14 @@ export function DocumentPreview({
               disabled={rerunning}
             />
             <FlatButton glyph={faRectangleList} label="Change Log" onClick={openChangeLog} />
+            <FlatButton glyph={faGraduationCap} label="Go to LMS" onClick={openLms} />
           </>
         )}
       </div>
 
       <div style={{ flex: '1 0 0', minHeight: 0, display: 'flex' }}>
         <Viewer view={view} reportRef={reportRef} />
-        {/* The Training Report is a full-width read; the QV rail and panel are
+        {/* Training Requirements is a full-width read; the QV rail and panel are
             document-preview affordances and are hidden while it is showing. */}
         {view === 'preview' && (
           <>

@@ -341,7 +341,9 @@ export function TopHeaderBar() {
         </HeaderAction>
 
         <LogoCrumb name="TI" />
-        <Crumb label="Room" value="123456_Eplizine _eTMF" offering="eTMF" starred />
+        {/* The study, named as the LMS names it, so following a link between
+            the two prototypes stays on one study. */}
+        <Crumb label="Room" value="Bivivid" offering="eTMF" starred />
         <Crumb value="eTMF" glyph={faCubes} />
         <Crumb value="Documents" isEnd />
       </div>

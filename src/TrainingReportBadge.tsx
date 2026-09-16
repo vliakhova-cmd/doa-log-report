@@ -118,7 +118,7 @@ export function TrainingReportBadge({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Training report ready — ${needsAttention} of ${summary.people} need review. Show summary.`}
+        aria-label={`Training requirements checked — ${needsAttention} of ${summary.people} need review. Show summary.`}
         onClick={() => setOpen((v) => !v)}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
@@ -156,14 +156,14 @@ export function TrainingReportBadge({
           }}
         />
         <FontAwesomeIcon icon={faWandMagicSparkles} style={{ width: icon.s, height: icon.s }} />
-        <span>Report ready</span>
+        <span>Requirements checked</span>
       </button>
 
       {open && createPortal(
         <div
           ref={panelRef}
           role="dialog"
-          aria-label="Training report summary"
+          aria-label="Training requirements summary"
           style={{
             position: 'fixed',
             top: at.top,
@@ -180,7 +180,7 @@ export function TrainingReportBadge({
             whiteSpace: 'normal',
           }}
         >
-          <div style={{ ...type.bodySemibold, color: color.text }}>Training report ready</div>
+          <div style={{ ...type.bodySemibold, color: color.text }}>Training requirements checked</div>
           <div style={{ ...type.captionRegular, color: color.textMuted, marginTop: 2 }}>
             Cross-module check · {summary.ranAt}
           </div>
@@ -245,7 +245,7 @@ export function TrainingReportBadge({
               cursor: 'pointer',
             }}
           >
-            Open training report
+            Open training requirements
           </button>
         </div>,
         document.body,

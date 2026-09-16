@@ -250,6 +250,8 @@ export const color = {
   /** qv-panel/navigation/item/resting-icon · resting-main-text */
   qvNavRestingIcon: '#1f6aac',
   qvNavRestingText: '#0b1528',
+  /** qv-panel/navigation/item/hover-bg — hover keeps the resting icon and text tones */
+  qvNavHoverBg: '#d0e5f6',
   /** qv-panel/navigation/item/selected-bg · selected-icon · selected-main-text */
   qvNavSelectedBg: '#5391c6',
   qvNavSelectedText: '#ffffff',
@@ -530,10 +532,16 @@ export const idPill = { paddingX: 1, paddingY: 1, radius: 100, gap: 2, iconSize:
 /** qv-panel/* */
 export const qvPanel = {
   navWidth: 75,
+  /** The item is a fixed 75 wide, not just a min-height */
+  navItemWidth: 75,
   navItemMinHeight: 75,
   navItemPaddingXY: 5,
   navItemGap: 0,
+  /** qv-panel/navigation/item icon: a 30px box around an Icons/solid/m (20) glyph */
   navItemIconSize: 30,
+  navItemGlyph: 20,
+  /** elevation/focus/inner — 2px brand ring inside a 3px white one */
+  focusShadow: 'inset 0 0 0 3px #ffffff, inset 0 0 0 2px #1f6aac',
   width: 600,
   minWidth: 400,
   maxWidth: 900,
