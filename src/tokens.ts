@@ -45,6 +45,8 @@ export const type = {
   captionSemibold: { fontFamily: FONT, fontSize: 12, lineHeight: '15px', fontWeight: 600 },
   /** Caption/Regular — 12/15 400 */
   captionRegular: { fontFamily: FONT, fontSize: 12, lineHeight: '15px', fontWeight: 400 },
+  /** Headings/H6/Semibold — 14/20 600 (the waffle menu's app labels) */
+  h6: { fontFamily: FONT, fontSize: 14, lineHeight: '20px', fontWeight: 600 },
   /** Counters/Large — 16/20 600 */
   counterLarge: { fontFamily: FONT, fontSize: 16, lineHeight: '20px', fontWeight: 600 },
   /** Headings/H4 — 18/30 600 */
@@ -599,3 +601,42 @@ export const favoriteActiveIcon = '#f0d37e';
 
 /** icons/solid/* — s renders 15px glyph inside a 20px box */
 export const icon = { xs: 12, s: 15, m: 20, boxS: 20 } as const;
+
+/**
+ * Waffle menu — Origami | PROD | 10.9, node 26748:27643. The app switcher's
+ * panel: a 300-wide sidebar of the client's products, and the details panel
+ * that only Links opens.
+ */
+export const waffle = {
+  /** sizes/radius/m · sizes/gap/m · the Dialog effect the panel carries */
+  radius: 15,
+  padding: 15,
+  gap: 15,
+  shadow: '0 17px 45px rgba(11,21,40,0.1), 0 0 0 1px rgba(11,21,40,0.03)',
+  sidebarWidth: 300,
+  detailsWidth: 480,
+  /** The client header is one 50px row — avatar/min-width is 40, drawn at 50 */
+  headerHeight: 50,
+  titleGap: 5,
+  /** app chip main — 300×70 rows, 5 apart, with a 50px tile at radius-s */
+  rowHeight: 70,
+  rowStackGap: 5,
+  rowGap: 10,
+  rowPaddingX: 10,
+  tileSize: 50,
+  linkTileSize: 40,
+  /** sizes/radius/s */
+  tileRadius: 10,
+  /** bg/neutral/solid/subtle/resting — the chosen row, and Button/Solid base */
+  rowSelectedBg: '#f2f4fa',
+  settingsBg: '#f2f4fa',
+  /** bg/accent/blue/solid/subtlest/resting · avatar/icon */
+  blueTile: '#e3f4ff',
+  blueIcon: '#1f6aac',
+  /** bg/accent/pink/solid/subtlest/resting · text/accent-pink */
+  pinkTile: '#f8eef6',
+  pinkIcon: '#b451a2',
+  /** bg/accent/aqua/solid/subtlest/resting · text/accent-aqua */
+  aquaTile: '#ebf5f4',
+  aquaIcon: '#2a7c77',
+} as const;

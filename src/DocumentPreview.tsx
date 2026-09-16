@@ -885,7 +885,10 @@ function QvPanelBody() {
  * that site's profile rather than the study's matrix, which reads across every
  * site and would not be about the document on screen.
  */
-const lmsDoaUrl = () => `http://localhost:5176/?site=${encodeURIComponent(currentSite().number)}&section=doa`;
+// Dev: the LMS's own dev server. Published: the combined site, where the LMS
+// is the root and this app sits one level under it.
+const LMS_URL = import.meta.env.DEV ? 'http://localhost:5176/' : new URL('../', window.location.href).pathname;
+const lmsDoaUrl = () => `${LMS_URL}?site=${encodeURIComponent(currentSite().number)}&section=doa`;
 
 export function DocumentPreview({
   doc,

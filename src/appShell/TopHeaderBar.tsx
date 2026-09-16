@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faMagnifyingGlass, faBell, faCaretDown, faCubes, faStar } from '@fortawesome/free-solid-svg-icons';
+import WaffleMenu from './WaffleMenu';
 import { color, type, header, icon, status as st, chip, button as btn, favoriteActiveIcon } from '../tokens';
 
 // Top Header — DS - Advanced | IN PROGRESS | 2.0, "Header Top" node 86:154743.
@@ -110,7 +111,7 @@ function SwitcherMark() {
 }
 
 /** Button/Flat primary, sized to header-top/action/* */
-function HeaderAction({ children, badge, label }: { children: React.ReactNode; badge?: number; label: string }) {
+function HeaderAction({ children, badge, label, onClick }: { children: React.ReactNode; badge?: number; label: string; onClick?: () => void }) {
   const [hover, setHover] = useState(false);
   const [pressed, setPressed] = useState(false);
 
@@ -122,6 +123,7 @@ function HeaderAction({ children, badge, label }: { children: React.ReactNode; b
       type="button"
       aria-label={label}
       title={label}
+      onClick={onClick}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => {
         setHover(false);
@@ -313,6 +315,7 @@ function LogoCrumb({ name }: { name: string }) {
 }
 
 export function TopHeaderBar() {
+  const [switcher, setSwitcher] = useState(false);
   return (
     <div
       style={{
@@ -336,9 +339,14 @@ export function TopHeaderBar() {
             with Button/Flat primary hover and pressed states. It was previously a
             plain div holding a 20px glyph, which is icons/solid/m, not the
             header-top/action/icon-size the component asks for. */}
-        <HeaderAction label="App switcher">
-          <SwitcherMark />
-        </HeaderAction>
+        {/* The app switcher opens the waffle menu — the client's other
+            products, and the links a study is wired to. */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <HeaderAction label="App switcher" onClick={() => setSwitcher(o => !o)}>
+            <SwitcherMark />
+          </HeaderAction>
+          {switcher && <WaffleMenu onClose={() => setSwitcher(false)} />}
+        </div>
 
         <LogoCrumb name="TI" />
         {/* The study, named as the LMS names it, so following a link between
