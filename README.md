@@ -335,7 +335,7 @@ equal specificity and would otherwise win on source order.
   is still "3 linked courses", not a bare "3". The ambiguous row is the exception: it has no
   count yet, so it keeps the muted "Pending contact selection" sentence rather than an empty chip.
 
-**Duty → course coverage** is the other pivot: one row per duty, `#` first so the chip numbers
+**Duty and Course Requirements** is the other pivot: one row per duty, `#` first so the chip numbers
 decode against it, then the linked LMS course, how many people are assigned, how many are
 trained, and the coverage status.
 
